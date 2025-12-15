@@ -131,10 +131,12 @@ const _Base = class _Base {
     const { method = "GET", searchParams = {}, headers = {}, body, expectText = false } = options;
     const fullUrl = new URL(url, this.baseurl);
     Object.entries(searchParams).forEach(([key, value]) => {
+      if (value === void 0 || value === null) return;
       fullUrl.searchParams.append(key, value.toString());
     });
     const fetchOptions = {
       method,
+      redirect: "manual",
       headers: {
         ...this.baseHeaders,
         ...headers
@@ -172,10 +174,12 @@ const _Base = class _Base {
     const { method = "GET", searchParams = {}, headers = {}, body } = options;
     const fullUrl = new URL(url, this.baseurl);
     Object.entries(searchParams).forEach(([key, value]) => {
+      if (value === void 0 || value === null) return;
       fullUrl.searchParams.append(key, value.toString());
     });
     const fetchOptions = {
       method,
+      redirect: "manual",
       headers: {
         ...this.baseHeaders,
         ...headers
@@ -1149,7 +1153,7 @@ const _WebUntisAnonymousAuth = class _WebUntisAnonymousAuth extends InternalWebu
     };
     const response = await this._fetch(requestUrl, {
       method: "POST",
-      body: JSON.stringify(requestBody)
+      body: requestBody
     });
     if (response.error) throw new Error("Failed to login. " + (response.error.message || ""));
     const otp = this.anonymousOtp;

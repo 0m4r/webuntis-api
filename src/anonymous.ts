@@ -46,7 +46,7 @@ export class WebUntisAnonymousAuth extends InternalWebuntisSecretLogin {
         const response = await this._fetch(requestUrl, {
             method: 'POST',
 
-            body: JSON.stringify(requestBody),
+            body: requestBody,
         });
 
         if (response.error) throw new Error('Failed to login. ' + (response.error.message || ''));

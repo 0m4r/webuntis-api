@@ -77,12 +77,14 @@ export class Base {
         // Build URL with search parameters
         const fullUrl = new URL(url, this.baseurl);
         Object.entries(searchParams).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
             fullUrl.searchParams.append(key, value.toString());
         });
 
         // Prepare request options
         const fetchOptions: RequestInit = {
             method,
+            redirect: 'manual',
             headers: {
                 ...this.baseHeaders,
                 ...headers,
@@ -141,12 +143,14 @@ export class Base {
         // Build URL with search parameters
         const fullUrl = new URL(url, this.baseurl);
         Object.entries(searchParams).forEach(([key, value]) => {
+            if (value === undefined || value === null) return;
             fullUrl.searchParams.append(key, value.toString());
         });
 
         // Prepare request options
         const fetchOptions: RequestInit = {
             method,
+            redirect: 'manual',
             headers: {
                 ...this.baseHeaders,
                 ...headers,

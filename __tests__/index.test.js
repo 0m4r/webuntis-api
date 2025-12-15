@@ -200,6 +200,50 @@ test('should method logout return true', async () => {
     expect(await untis.logout()).toBe(true);
 });
 
+test('login requests use manual redirect', async () => {
+    const untis = createInstance();
+
+    await untis.login();
+
+    const [, opts] = fetchMock.calls()[0];
+    expect(opts.redirect).toBe('manual');
+});
+
+test('fetch omits null and undefined query params', async () => {
+    const untis = createInstance();
+    untis.sessionInformation = { sessionId: 'session-id' };
+
+    fetchMock.get(/omit-test/, { body: 'ok', headers: { 'Content-Type': 'text/plain' } }, { overwriteRoutes: true });
+
+    await untis._fetch('/omit-test', {
+        method: 'GET',
+        searchParams: { foo: undefined, bar: null, baz: 'ok' },
+        expectText: true,
+    });
+
+    const [url] = fetchMock.calls().pop();
+    const target = typeof url === 'string' ? url : url && url.url ? url.url : `${url}`;
+    const parsed = new URL(target);
+
+    expect(parsed.searchParams.get('foo')).toBeNull();
+    expect(parsed.searchParams.get('bar')).toBeNull();
+    expect(parsed.searchParams.get('baz')).toBe('ok');
+});
+
+test('anonymous login sends JSON content type', async () => {
+    const { WebUntisAnonymousAuth } = require('../dist/webuntis.js');
+    const untis = new WebUntisAnonymousAuth(school, 'xyz.webuntis.com');
+    untis._otpLogin = jest.fn().mockResolvedValue('ok');
+
+    fetchMock.post(/jsonrpc_intern\.do/, { result: {} }, { overwriteRoutes: true });
+
+    await untis.login();
+
+    const [, opts] = fetchMock.calls()[0];
+    const headers = opts.headers instanceof Headers ? opts.headers : new Headers(opts.headers);
+    expect(headers.get('Content-Type')).toBe('application/json');
+});
+
 cases(
     'should getLatestSchoolyear return object',
     async ({ validate, dateFormat }) => {
