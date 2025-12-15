@@ -10,7 +10,6 @@ export type URLClass = typeof URL;
 export class WebUntisQR extends WebUntisSecretAuth {
     /**
      * Use the data you get from a WebUntis QR code
-     * @constructor
      * @param {string} QRCodeURI A WebUntis uri. This is the data you get from the QR Code from the webuntis webapp under profile->Data access->Display
      * @param {string} [identity="Awesome"]  A identity like: MyAwesomeApp
      * @param {Object} authenticator Custom otplib v12 instance. Default will use the default otplib configuration.
@@ -26,15 +25,27 @@ export class WebUntisQR extends WebUntisSecretAuth {
     ) {
         let URLImplementation = URL;
         if (!URL) {
-            if ('import' in globalThis) {
-                throw new Error(
-                    'You need to provide the URL object by yourself. We can not eval the require in ESM mode.',
-                );
+            // Prefer global URL (browsers / modern Node). Fall back to require('url') in CJS.
+            if (typeof (globalThis as any).URL === 'function') {
+                URLImplementation = (globalThis as any).URL as unknown as URLClass;
+            } else if (typeof (globalThis as any).require === 'function') {
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const urlModule = (globalThis as any).require('url');
+                    URLImplementation = urlModule.URL as URLClass;
+                } catch (error) {
+                    throw new Error('Failed to load url module: ' + (error as Error).message);
+                }
+            } else {
+                throw new Error('You need to provide the URL object by yourself. Could not obtain URL implementation.');
             }
-            // React-Native will not eval this expression
-            URLImplementation = eval("require('url').URL") as URLClass;
         }
-        const uri = new URLImplementation!(QRCodeURI);
+
+        if (!URLImplementation) {
+            throw new Error('URL implementation is not available.');
+        }
+        const URLImpl = URLImplementation as URLClass;
+        const uri = new URLImpl(QRCodeURI);
         super(
             uri.searchParams.get('school')!,
             uri.searchParams.get('user')!,

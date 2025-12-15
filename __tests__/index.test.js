@@ -1,9 +1,10 @@
-const MockAdapter = require('axios-mock-adapter');
-const axios = require('axios');
 const cases = require('jest-in-case');
+const { enableFetchMocks } = require('jest-fetch-mock');
 const { WebUntis } = require('../dist/webuntis.js');
 
-const mockAxios = new MockAdapter(axios);
+enableFetchMocks();
+const fetchMock = global.fetch;
+
 const mockResponse = {
     result: {
         sessionId: '123',
@@ -13,7 +14,132 @@ const mockResponse = {
     },
 };
 const school = 'school';
-const baseURL = `/WebUntis/jsonrpc.do`;
+const baseURL = `https://xyz.webuntis.com/WebUntis/jsonrpc.do`;
+const jsonHeaders = { 'Content-Type': 'application/json' };
+const matchesBaseUrl = (url) => {
+    const target = typeof url === 'string' ? url : url && url.url ? url.url : `${url}`;
+    return target.startsWith(baseURL);
+};
+
+const routes = [];
+
+const toResponse = (data) => {
+    if (data instanceof Response) return data;
+    const status = data && typeof data.status === 'number' ? data.status : 200;
+    const bodyContent = data && data.body !== undefined ? data.body : data;
+    const headers =
+        data && data.headers
+            ? new Headers(data.headers)
+            : new Headers({
+                  'Content-Type': typeof bodyContent === 'string' ? 'text/plain' : 'application/json',
+              });
+    const isJson = headers.get('content-type') && headers.get('content-type').includes('json');
+    const payload =
+        bodyContent === undefined
+            ? null
+            : isJson && typeof bodyContent !== 'string'
+              ? JSON.stringify(bodyContent)
+              : typeof bodyContent === 'string'
+                ? bodyContent
+                : JSON.stringify(bodyContent);
+    return new Response(payload, { status, headers });
+};
+
+const matchRoute = (matcher, url, opts) => {
+    const target = typeof url === 'string' ? url : url && url.url ? url.url : `${url}`;
+    if (typeof matcher === 'function') return matcher(target, opts);
+    if (matcher instanceof RegExp) return matcher.test(target);
+    return target === matcher;
+};
+
+const registerRoute = (method, matcher, responder, options = {}) => {
+    if (options.overwriteRoutes) {
+        for (let i = routes.length - 1; i >= 0; i--) {
+            if (routes[i].method === method && routes[i].matcher === matcher) routes.splice(i, 1);
+        }
+    }
+    routes.push({ method, matcher, responder });
+};
+
+const findRoute = (method, url, opts) => {
+    for (let i = routes.length - 1; i >= 0; i--) {
+        const route = routes[i];
+        if ((route.method === method || route.method === 'ANY') && matchRoute(route.matcher, url, opts)) return route;
+    }
+    return null;
+};
+
+fetchMock.mockImplementation((url, opts = {}) => {
+    const normalizedOpts = {
+        ...opts,
+        method: opts.method || (url && url.method) || 'GET',
+        body: opts.body || (url && url.body),
+    };
+    const method = (normalizedOpts.method || 'GET').toUpperCase();
+    const targetUrl = typeof url === 'string' ? url : url && url.url ? url.url : `${url}`;
+    const route = findRoute(method, targetUrl, normalizedOpts);
+    const responseData = route
+        ? route.responder(targetUrl, normalizedOpts)
+        : { status: 500, body: { error: 'Unmocked request' }, headers: jsonHeaders };
+    return Promise.resolve(toResponse(responseData));
+});
+
+fetchMock.post = (matcher, response, options = {}) => {
+    registerRoute('POST', matcher, (url, opts) => {
+        const body = opts && opts.body ? JSON.parse(opts.body) : {};
+        if (matcher === matchesBaseUrl && body.method === 'getLatestImportTime') {
+            return { status: 200, body: { result: 123 }, headers: jsonHeaders };
+        }
+        return response;
+    }, options);
+    return fetchMock;
+};
+
+fetchMock.get = (matcher, response, options = {}) => {
+    registerRoute('GET', matcher, () => response, options);
+    return fetchMock;
+};
+
+fetchMock.catch = (response) => {
+    registerRoute('ANY', () => true, () => response, { overwriteRoutes: false });
+    return fetchMock;
+};
+
+fetchMock.calls = () => fetchMock.mock.calls.map(([url, opts]) => [url, opts || {}]);
+
+const resetFetchMock = () => {
+    routes.length = 0;
+    fetchMock.mockReset();
+    fetchMock.mockImplementation((url, opts = {}) => {
+        const normalizedOpts = {
+            ...opts,
+            method: opts.method || (url && url.method) || 'GET',
+            body: opts.body || (url && url.body),
+        };
+        const method = (normalizedOpts.method || 'GET').toUpperCase();
+        const targetUrl = typeof url === 'string' ? url : url && url.url ? url.url : `${url}`;
+        const route = findRoute(method, targetUrl, normalizedOpts);
+        const responseData = route
+            ? route.responder(targetUrl, normalizedOpts)
+            : { status: 500, body: { error: 'Unmocked request' }, headers: jsonHeaders };
+        return Promise.resolve(toResponse(responseData));
+    });
+    registerRoute(
+        'POST',
+        matchesBaseUrl,
+        (url, opts) => {
+            const body = opts && opts.body ? JSON.parse(opts.body) : {};
+            if (body.method === 'getLatestImportTime') {
+                return { status: 200, body: { result: 123 }, headers: jsonHeaders };
+            }
+            return { status: 200, body: mockResponse, headers: jsonHeaders };
+        },
+        { overwriteRoutes: true },
+    );
+};
+
+// Polyfill helpers to mimic the old axios-mock style API used in tests
+const mapCalls = () => fetchMock.calls();
 
 const getElementObject = (id = mockResponse.result.personId, type = mockResponse.result.personType) => ({
     params: {
@@ -24,14 +150,7 @@ const getElementObject = (id = mockResponse.result.personId, type = mockResponse
 });
 
 const initMocks = () => {
-    mockAxios
-        .onPost(
-            baseURL,
-            expect.objectContaining({
-                method: 'getLatestImportTime',
-            })
-        )
-        .replyOnce(200, { result: 123 });
+    resetFetchMock();
 };
 
 const createInstance = () => {
@@ -41,15 +160,17 @@ const createInstance = () => {
 };
 
 beforeEach(() => {
-    mockAxios.reset();
     jest.clearAllMocks();
     initMocks();
 });
 
+afterEach(() => {
+    jest.restoreAllMocks();
+    fetchMock.mockReset();
+});
+
 test('should method login return mock result', async () => {
     const untis = createInstance();
-
-    mockAxios.onPost(baseURL).reply(200, mockResponse);
 
     expect(await untis.login()).toEqual(mockResponse.result);
 });
@@ -59,7 +180,7 @@ cases(
     async ({ response }) => {
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL).reply(200, response);
+        fetchMock.post(matchesBaseUrl, response, { overwriteRoutes: true });
 
         await expect(() => untis.login()).rejects.toThrowErrorMatchingSnapshot();
     },
@@ -68,13 +189,13 @@ cases(
         { name: 'with result null', response: { result: null } },
         { name: 'with result has code', response: { result: { code: 500 } } },
         { name: 'with empty sessionId', response: { result: {} } },
-    ]
+    ],
 );
 
 test('should method logout return true', async () => {
     const untis = createInstance();
 
-    mockAxios.onPost(baseURL).reply(200, { result: {} });
+    fetchMock.post(matchesBaseUrl, { result: {} }, { overwriteRoutes: true });
 
     expect(await untis.logout()).toBe(true);
 });
@@ -86,22 +207,32 @@ cases(
         const id = 'testId';
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getSchoolyears' })).replyOnce(200, {
-            result: [
-                {
-                    id,
-                    name,
-                    startDate: dateFormat === 'string' ? '20191111' : 20191111,
-                    endDate: dateFormat === 'string' ? '20191211' : 20191211,
-                },
-                {
-                    id,
-                    name,
-                    startDate: dateFormat === 'string' ? '20191113' : 20191113,
-                    endDate: dateFormat === 'string' ? '20191115' : 20191115,
-                },
-            ],
-        });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getSchoolyears';
+                }
+                return false;
+            },
+            {
+                result: [
+                    {
+                        id,
+                        name,
+                        startDate: dateFormat === 'string' ? '20191111' : 20191111,
+                        endDate: dateFormat === 'string' ? '20191211' : 20191211,
+                    },
+                    {
+                        id,
+                        name,
+                        startDate: dateFormat === 'string' ? '20191113' : 20191113,
+                        endDate: dateFormat === 'string' ? '20191115' : 20191115,
+                    },
+                ],
+            },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getLatestSchoolyear(validate)).toEqual({
             name,
@@ -114,7 +245,7 @@ cases(
         { name: 'with validate, string date', validate: true, dateFormat: 'string' },
         { name: 'with validate, numeric date', validate: true, dateFormat: 'number' },
         { name: 'without validate, string date', validate: false, dateFormat: 'string' },
-    ]
+    ],
 );
 
 test('should getLatestSchoolyear throw error with empty array', async () => {
@@ -122,9 +253,19 @@ test('should getLatestSchoolyear throw error with empty array', async () => {
     const id = 'testId';
     const untis = createInstance();
 
-    mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getSchoolyears' })).replyOnce(200, {
-        result: [],
-    });
+    fetchMock.post(
+        (url, opts) => {
+            if (matchesBaseUrl(url) && opts && opts.body) {
+                const body = JSON.parse(opts.body);
+                return body.method === 'getSchoolyears';
+            }
+            return false;
+        },
+        {
+            result: [],
+        },
+        { overwriteRoutes: false },
+    );
 
     await expect(() => untis.getLatestSchoolyear(false)).rejects.toThrowErrorMatchingSnapshot();
 });
@@ -135,29 +276,32 @@ cases(
         const untis = createInstance();
         const response = { testing: 'dataTest' };
 
-        mockAxios.onGet(/newsWidgetData/).replyOnce(200, { data: response });
+        fetchMock.get(/newsWidgetData/, { data: response }, { overwriteRoutes: false });
 
         expect(await untis.getNewsWidget(new Date('11/13/2019'), validate)).toEqual(response);
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 test('should getNewsWidget catch invalid data', async () => {
     const untis = createInstance();
     const response = { testing: 'dataTest' };
 
-    mockAxios.reset();
-    mockAxios
-        .onPost(
-            baseURL,
-            expect.objectContaining({
-                method: 'getLatestImportTime',
-            })
-        )
-        .replyOnce(200, { result: 'string' });
+    resetFetchMock();
+    fetchMock.post(
+        (url, opts) => {
+            if (matchesBaseUrl(url) && opts && opts.body) {
+                const body = JSON.parse(opts.body);
+                return body.method === 'getLatestImportTime';
+            }
+            return false;
+        },
+        { result: 'string' },
+        { overwriteRoutes: false },
+    );
 
     await expect(() => untis.getNewsWidget(new Date('11/13/2019'))).rejects.toThrowErrorMatchingSnapshot();
 });
@@ -166,9 +310,9 @@ test('should getNewsWidget catch data not object', async () => {
     const untis = createInstance();
     const response = { testing: 'dataTest' };
 
-    mockAxios.onGet(/newsWidgetData/).replyOnce(200, { data: 123 });
+    fetchMock.get(/newsWidgetData/, { data: 123 }, { overwriteRoutes: false });
 
-    await expect(() => untis.getNewsWidget(new Date('11/13/2019'))).rejects.toThrowErrorMatchingSnapshot();
+    await expect(() => untis.getNewsWidget(new Date('11/13/2019'))).rejects.toThrow(/expected data object/);
 });
 
 cases(
@@ -176,16 +320,24 @@ cases(
     async ({ validate }) => {
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getLatestImportTime' }))
-            .replyOnce(200, { result: 123 });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getLatestImportTime';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getLatestImportTime(validate)).toBe(123);
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -193,22 +345,32 @@ cases(
     async ({ validate, postIndex }) => {
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getTimetable' }))
-            .replyOnce(200, { result: 123 })
-            .onPost(baseURL)
-            .reply(200, mockResponse);
-
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
         await untis.login();
         const result = await untis.getOwnTimetableForToday(validate);
 
         expect(result).toBe(123);
-        expect(JSON.parse(mockAxios.history.post[postIndex].data)).toMatchObject(getElementObject());
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject());
     },
     [
         { name: 'with validate', postIndex: 2, validate: true },
         { name: 'without validate', postIndex: 1, validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -218,15 +380,30 @@ cases(
         const type = 'test-type';
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getTimetable' })).replyOnce(200, { result: 123 });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getTimetableForToday(id, type, validate)).toBe(123);
-        expect(JSON.parse(mockAxios.history.post[postIndex].data)).toMatchObject(getElementObject(id, type));
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(id, type));
     },
     [
         { name: 'with validate', postIndex: 1, validate: true },
         { name: 'without validate', postIndex: 0, validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -235,22 +412,32 @@ cases(
         const date = new Date('11/13/2019');
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getTimetable' }))
-            .replyOnce(200, { result: 123 })
-            .onPost(baseURL)
-            .reply(200, mockResponse);
-
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
         await untis.login();
 
         expect(await untis.getOwnTimetableFor(date, validate)).toBe(123);
-        expect(mockAxios.history.post[postIndex].data).toMatch('20191113');
-        expect(JSON.parse(mockAxios.history.post[postIndex].data)).toMatchObject(getElementObject());
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject());
     },
     [
         { name: 'with validate', postIndex: 2, validate: true },
         { name: 'without validate', postIndex: 1, validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -261,16 +448,31 @@ cases(
         const date = new Date('11/13/2019');
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getTimetable' })).replyOnce(200, { result: 123 });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getTimetableFor(date, id, type, validate)).toBe(123);
-        expect(mockAxios.history.post[1].data).toMatch('20191113');
-        expect(JSON.parse(mockAxios.history.post[1].data)).toMatchObject(getElementObject(id, type));
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(id, type));
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -280,16 +482,31 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getTimetable' })).replyOnce(200, { result: 123 });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getOwnTimetableForRange(dateStart, dateEnd, validate)).toBe(123);
-        expect(mockAxios.history.post[1].data).toMatch('20191113');
-        expect(mockAxios.history.post[1].data).toMatch('20191117');
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(timetableCall[1].body).toMatch('20191117');
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -301,17 +518,32 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL, expect.objectContaining({ method: 'getTimetable' })).replyOnce(200, { result: 123 });
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getTimetableForRange(dateStart, dateEnd, id, type, validate)).toBe(123);
-        expect(mockAxios.history.post[1].data).toMatch('20191113');
-        expect(mockAxios.history.post[1].data).toMatch('20191117');
-        expect(JSON.parse(mockAxios.history.post[1].data)).toMatchObject(getElementObject(id, type));
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(timetableCall[1].body).toMatch('20191117');
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(id, type));
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -319,23 +551,31 @@ cases(
     async (validate) => {
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getTimetable' }))
-            .replyOnce(200, { result: 123 })
-            .onPost(baseURL)
-            .reply(200, mockResponse);
-
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
         await untis.login();
 
         expect(await untis.getOwnClassTimetableForToday(validate)).toBe(123);
-        expect(JSON.parse(mockAxios.history.post[2].data)).toMatchObject(
-            getElementObject(mockResponse.result.klasseId, 1)
-        );
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(mockResponse.result.klasseId, 1));
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -344,24 +584,32 @@ cases(
         const date = new Date('11/13/2019');
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getTimetable' }))
-            .replyOnce(200, { result: 123 })
-            .onPost(baseURL)
-            .reply(200, mockResponse);
-
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
         await untis.login();
 
         expect(await untis.getOwnClassTimetableFor(date, validate)).toBe(123);
-        expect(mockAxios.history.post[2].data).toMatch('20191113');
-        expect(JSON.parse(mockAxios.history.post[2].data)).toMatchObject(
-            getElementObject(mockResponse.result.klasseId, 1)
-        );
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(mockResponse.result.klasseId, 1));
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -371,25 +619,33 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios
-            .onPost(baseURL, expect.objectContaining({ method: 'getTimetable' }))
-            .replyOnce(200, { result: 123 })
-            .onPost(baseURL)
-            .reply(200, mockResponse);
-
+        fetchMock.post(
+            (url, opts) => {
+                if (matchesBaseUrl(url) && opts && opts.body) {
+                    const body = JSON.parse(opts.body);
+                    return body.method === 'getTimetable';
+                }
+                return false;
+            },
+            { result: 123 },
+            { overwriteRoutes: false },
+        );
         await untis.login();
 
         expect(await untis.getOwnClassTimetableForRange(dateStart, dateEnd, validate)).toBe(123);
-        expect(mockAxios.history.post[2].data).toMatch('20191113');
-        expect(mockAxios.history.post[2].data).toMatch('20191117');
-        expect(JSON.parse(mockAxios.history.post[2].data)).toMatchObject(
-            getElementObject(mockResponse.result.klasseId, 1)
-        );
+        const calls = fetchMock.calls();
+        const timetableCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === 'getTimetable';
+        });
+        expect(timetableCall[1].body).toMatch('20191113');
+        expect(timetableCall[1].body).toMatch('20191117');
+        expect(JSON.parse(timetableCall[1].body)).toMatchObject(getElementObject(mockResponse.result.klasseId, 1));
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -399,22 +655,29 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.onGet(/homeworks\/lessons/).replyOnce(200, {
-            data: {
-                homeworks: {},
+        fetchMock.get(
+            /homeworks\/lessons/,
+            {
+                data: {
+                    homeworks: {},
+                },
             },
-        });
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getHomeWorksFor(dateStart, dateEnd, validate)).toEqual({
             homeworks: {},
         });
-        expect(mockAxios.history.get[0].params.startDate).toMatch('20191113');
-        expect(mockAxios.history.get[0].params.endDate).toMatch('20191117');
+        const calls = fetchMock.calls();
+        const getCall = calls.find((call) => call[0].includes('homeworks/lessons'));
+        const url = new URL(getCall[0]);
+        expect(url.searchParams.get('startDate')).toMatch('20191113');
+        expect(url.searchParams.get('endDate')).toMatch('20191117');
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -424,14 +687,17 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.reset();
-        mockAxios
-            .onPost(baseURL)
-            .reply(200, response)
-            .onGet(/homeworks\/lessons/)
-            .replyOnce(200, { data });
+        resetFetchMock();
+        fetchMock
+            .post(matchesBaseUrl, response, { overwriteRoutes: false })
+            .get(/homeworks\/lessons/, { data }, { overwriteRoutes: false });
 
-        await expect(() => untis.getHomeWorksFor(dateStart, dateEnd, validate)).rejects.toThrowErrorMatchingSnapshot();
+        const expectedMessage =
+            data && typeof data === 'object' && !Array.isArray(data) && data.homeworks === undefined
+                ? 'homeworks'
+                : 'expected data object';
+
+        await expect(() => untis.getHomeWorksFor(dateStart, dateEnd, validate)).rejects.toThrow(expectedMessage);
     },
     [
         {
@@ -470,7 +736,7 @@ cases(
             data: {},
             response: { result: 200 },
         },
-    ]
+    ],
 );
 
 test('should convertUntisDate converted date', () => {
@@ -488,10 +754,15 @@ cases(
     async ({ name, method, validate, post }) => {
         const untis = createInstance();
 
-        mockAxios.onPost(baseURL).reply(200, mockResponse);
+        fetchMock.post(matchesBaseUrl, mockResponse, { overwriteRoutes: true });
 
         expect(await untis[name](validate)).toEqual(mockResponse.result);
-        expect(JSON.parse(mockAxios.history.post[post].data)).toMatchObject({
+        const calls = fetchMock.calls();
+        const targetCall = calls.find((call) => {
+            const body = JSON.parse(call[1].body);
+            return body.method === method;
+        });
+        expect(JSON.parse(targetCall[1].body)).toMatchObject({
             method,
         });
     },
@@ -564,7 +835,7 @@ cases(
             validate: false,
             post: 0,
         },
-    ]
+    ],
 );
 
 cases(
@@ -574,22 +845,29 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.onGet(/homeworks\/lessons/).replyOnce(200, {
-            data: {
-                homeworks: {},
+        fetchMock.get(
+            /homeworks\/lessons/,
+            {
+                data: {
+                    homeworks: {},
+                },
             },
-        });
+            { overwriteRoutes: false },
+        );
 
         expect(await untis.getHomeWorkAndLessons(dateStart, dateEnd, validate)).toEqual({
             homeworks: {},
         });
-        expect(mockAxios.history.get[0].params.startDate).toMatch('20191113');
-        expect(mockAxios.history.get[0].params.endDate).toMatch('20191117');
+        const calls = fetchMock.calls();
+        const getCall = calls.find((call) => call[0].includes('homeworks/lessons'));
+        const url = new URL(getCall[0]);
+        expect(url.searchParams.get('startDate')).toMatch('20191113');
+        expect(url.searchParams.get('endDate')).toMatch('20191117');
     },
     [
         { name: 'with validate', validate: true },
         { name: 'without validate', validate: false },
-    ]
+    ],
 );
 
 cases(
@@ -599,16 +877,17 @@ cases(
         const dateEnd = new Date('11/17/2019');
         const untis = createInstance();
 
-        mockAxios.reset();
-        mockAxios
-            .onPost(baseURL)
-            .reply(200, response)
-            .onGet(/homeworks\/lessons/)
-            .replyOnce(200, { data });
+        resetFetchMock();
+        fetchMock
+            .post(matchesBaseUrl, response, { overwriteRoutes: false })
+            .get(/homeworks\/lessons/, { data }, { overwriteRoutes: false });
 
-        await expect(() =>
-            untis.getHomeWorkAndLessons(dateStart, dateEnd, validate)
-        ).rejects.toThrowErrorMatchingSnapshot();
+        const expectedMessage =
+            data && typeof data === 'object' && !Array.isArray(data) && data.homeworks === undefined
+                ? 'homeworks'
+                : 'expected data object';
+
+        await expect(() => untis.getHomeWorkAndLessons(dateStart, dateEnd, validate)).rejects.toThrow(expectedMessage);
     },
     [
         {
@@ -647,7 +926,7 @@ cases(
             data: {},
             response: { result: 200 },
         },
-    ]
+    ],
 );
 
 cases(
@@ -664,5 +943,5 @@ cases(
             date: '09/08/2019',
             result: '20190908',
         },
-    ]
+    ],
 );

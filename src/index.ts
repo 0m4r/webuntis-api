@@ -4,3 +4,4 @@ export * from './secret';
 export * from './qr';
 export * from './anonymous';
 export * from './types';
+export type { SessionInformation } from './internal';

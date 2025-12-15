@@ -8,7 +8,7 @@ In case you need the Untis API Spec (pdf), you need to email Untis directly and 
 
 ## Note:
 
-As I have not been a student for a long time, I currently have no access to any Untis services. If you want to share your login details with me for testing purposes, contact me via [Telegram](t.me/TheNoim) or other means ([Homepage](noim.io)).
+As I have not been a student for a long time, I currently have no access to any Untis services. If you want to share your login details with me for testing purposes, contact me via [Telegram](https://t.me/TheNoim) or other means ([Homepage](https://noim.io)).
 
 ## Examples
 
@@ -17,7 +17,7 @@ As I have not been a student for a long time, I currently have no access to any 
 ```javascript
 import { WebUntis } from 'webuntis';
 
-const untis = new WebUntis('school', 'username', 'password', 'xyz.webuntis.com');
+const untis = new WebUntis('school', 'username', 'password', 'school.webuntis.com');
 
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
@@ -51,7 +51,14 @@ import { authenticator as Authenticator } from 'otplib';
 
 const secret = 'NL04FGY4FSY5';
 
-const untis = new WebUntisSecretAuth('school', 'username', secret, 'xyz.webuntis.com', 'custom-identity', Authenticator);
+const untis = new WebUntisSecretAuth(
+    'school',
+    'username',
+    secret,
+    'school.webuntis.com',
+    'custom-identity',
+    Authenticator,
+);
 
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
@@ -66,7 +73,7 @@ Only if your school supports public access.
 ```javascript
 import { WebUntisAnonymousAuth, WebUntisElementType } from 'webuntis';
 
-const untis = new WebUntisAnonymousAuth('school', 'xyz.webuntis.com');
+const untis = new WebUntisAnonymousAuth('school', 'school.webuntis.com');
 
 await untis.login();
 const classes = await untis.getClasses();
@@ -77,7 +84,7 @@ const timetable = await untis.getTimetableForToday(classes[0].id, WebUntisElemen
 
 ### Installation
 
-This package is compatible with CJS and ESM. *Note:* This package primary target is nodejs. It may also work with runtimes like react-native, but it will probably not work in the browser.
+This package is compatible with CJS and ESM. _Note:_ This package primary target is nodejs. It may also work with runtimes like react-native, but it will probably not work in the browser.
 
 ```bash
 yarn add webuntis
@@ -89,7 +96,7 @@ pnpm i webuntis
 
 ### ESM note:
 
-If you use the esm version of this package, you need to provide `Authenticator` and `URL` if necessary. For more information, look at the `User/Secret Login` or `QR Code Login` example. This is not needed for `username/password` or `anonymous` login. 
+If you use the esm version of this package, you need to provide `Authenticator` and `URL` if necessary. For more information, look at the `User/Secret Login` or `QR Code Login` example. This is not needed for `username/password` or `anonymous` login.
 
 ### Notice
 

@@ -50,8 +50,8 @@ export function parse(
         // skip things that don't look like key=value
         if (eqIdx < 0) continue;
 
-        const key = pair.substr(0, eqIdx).trim();
-        let val = pair.substr(++eqIdx, pair.length).trim();
+        const key = pair.substring(0, eqIdx).trim();
+        let val = pair.substring(++eqIdx, pair.length).trim();
 
         // quoted values
         if ('"' == val[0]) val = val.slice(1, -1);

@@ -4,10 +4,17 @@ import esbuild from 'rollup-plugin-esbuild';
 
 const name = 'webuntis';
 
+// Add any packages you explicitly want to inline (e.g. optional dependencies) here.
+const inlineDeps = new Set([]);
+
 const bundle = (config) => ({
     ...config,
     input: 'src/index.ts',
-    external: (id) => !/^[./]/.test(id),
+    treeshake: true,
+    external: (id) => {
+        if (inlineDeps.has(id)) return false;
+        return !/^[./]/.test(id);
+    },
 });
 
 export default defineConfig([
@@ -18,6 +25,7 @@ export default defineConfig([
                 file: `./dist/${name}.js`,
                 format: 'cjs',
                 sourcemap: true,
+                exports: 'named',
             },
             {
                 file: `./dist/${name}.mjs`,

@@ -5,16 +5,14 @@ export type Authenticator = typeof authenticator;
 
 export class WebUntisSecretAuth extends InternalWebuntisSecretLogin {
     private readonly secret: string;
-    private authenticator: Authenticator;
+    private authenticator?: Authenticator;
 
     /**
-     *
-     * @constructor
      * @augments WebUntis
      * @param {string} school The school identifier
      * @param {string} user
      * @param {string} secret
-     * @param {string} baseurl Just the host name of your WebUntis (Example: mese.webuntis.com)
+     * @param {string} baseurl Just the host name of your WebUntis (Example: [school].webuntis.com)
      * @param {string} [identity="Awesome"] A identity like: MyAwesomeApp
      * @param {Object} authenticator Custom otplib v12 instance. Default will use the default otplib configuration.
      * @param {boolean} [disableUserAgent=false] If this is true, axios will not send a custom User-Agent
@@ -32,22 +30,37 @@ export class WebUntisSecretAuth extends InternalWebuntisSecretLogin {
         this.secret = secret;
         this.authenticator = authenticator;
         if (!authenticator) {
-            if ('import' in globalThis) {
-                throw new Error(
-                    'You need to provide the otplib object by yourself. We can not eval the require in ESM mode.',
-                );
+            // Try to load synchronously if `require` is available (CJS).
+            // Otherwise defer loading to `login()` via dynamic import.
+            try {
+                if (typeof (globalThis as any).require === 'function') {
+                    // eslint-disable-next-line @typescript-eslint/no-var-requires
+                    const otplib = (globalThis as any).require('otplib');
+                    this.authenticator = otplib.authenticator;
+                }
+            } catch (error) {
+                // ignore synchronous require failure; we'll attempt dynamic import during login
+                // eslint-disable-next-line no-console
+                console.warn('Could not require otplib synchronously; will try dynamic import at login:', error);
             }
-            // React-Native will not eval this expression
-            const { authenticator } = eval("require('otplib')");
-            this.authenticator = authenticator;
         }
     }
 
     // @ts-ignore
     async login() {
         // Get JSESSION
-        const token = this.authenticator.generate(this.secret);
+        if (!this.authenticator) {
+            // Try dynamic import in ESM contexts
+            try {
+                const mod = await import('otplib');
+                this.authenticator = (mod as any).authenticator;
+            } catch (e) {
+                throw new Error('otplib is required for secret auth but could not be loaded.');
+            }
+        }
+        const token = this.authenticator!.generate(this.secret);
         const time = new Date().getTime();
+        if (this.username == null) throw new Error('No username provided for login.');
         return await this._otpLogin(token, this.username, time);
     }
 }

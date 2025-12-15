@@ -1,4 +1,3 @@
-import { AxiosInstance } from 'axios';
 import { authenticator } from 'otplib';
 import { URL } from 'url';
 
@@ -314,24 +313,44 @@ declare class Base {
     schoolbase64: string;
     username: string;
     password: string;
-    baseurl: string;
+    baseurl?: string;
     cookies: string[];
     id: string;
     sessionInformation: SessionInformation | null;
     anonymous: boolean;
-    axios: AxiosInstance;
+    baseHeaders: Record<string, string>;
     static TYPES: typeof WebUntisElementType;
     /**
-     *
-     * @constructor
+     * Custom fetch wrapper that provides axios-like functionality
+     * @protected
+     */
+    protected _fetch(url: string, options?: {
+        method?: string;
+        searchParams?: Record<string, any>;
+        headers?: Record<string, string>;
+        body?: any;
+        expectText?: boolean;
+    }): Promise<any>;
+    /**
+     * Raw fetch method that returns the Response object
+     * @protected
+     */
+    protected _fetchRaw(url: string, options?: {
+        method?: string;
+        searchParams?: Record<string, any>;
+        headers?: Record<string, string>;
+        body?: any;
+    }): Promise<Response>;
+    /**
      * @param {string} school The school identifier
      * @param {string} username
      * @param {string} password
-     * @param {string} baseurl Just the host name of your WebUntis (Example: mese.webuntis.com)
+     * @param {string} baseurl Just the host name of your WebUntis (Example: [school].webuntis.com)
      * @param {string} [identity="Awesome"] A identity like: MyAwesomeApp
-     * @param {boolean} [disableUserAgent=false] If this is true, axios will not send a custom User-Agent
+
+     * @param {boolean} [disableUserAgent=false] If this is true, fetch will not send a custom User-Agent
      */
-    constructor(school: string, username: string, password: string, baseurl: string, identity?: string, disableUserAgent?: boolean);
+    constructor(school: string, username: string, password: string, baseurl?: string, identity?: string, disableUserAgent?: boolean);
     /**
      * Logout the current session
      */
@@ -367,6 +386,16 @@ declare class Base {
      */
     getInbox(validateSession?: boolean): Promise<Inbox>;
     private _checkAnonymous;
+    /**
+     * Return the current session information or throw if not present
+     * @private
+     */
+    private getSessionInfo;
+    /**
+     * Return current person identifiers required for timetable/requests
+     * @private
+     */
+    private getCurrentPerson;
     /**
      *
      * @returns {string}
@@ -480,16 +509,19 @@ declare class Base {
      * Converts the untis date string format to a normal JS Date object
      * @param {string} date Untis date string
      * @param {Date} [baseDate=new Date()] Base date. Default beginning of current day
-     * @static
      */
     static convertUntisDate(date: string, baseDate?: Date): Date;
     /**
      * Convert a untis time string to a JS Date object
      * @param {string|number} time Untis time string
      * @param {Date} [baseDate=new Date()] Day used as base for the time. Default: Current date
-     * @static
      */
     static convertUntisTime(time: number | string, baseDate?: Date): Date;
+    /**
+     * Validate that a date range is valid (both Dates and start <= end)
+     * @private
+     */
+    static validateDateRange(rangeStart: Date, rangeEnd: Date, name?: string): void;
     /**
      * Get all known Subjects for the current logged-in user
      * @param {boolean} [validateSession=true]
@@ -626,7 +658,7 @@ declare class Base {
  * @private
  */
 declare class InternalWebuntisSecretLogin extends Base {
-    constructor(school: string, username: string, password: string, baseurl: string, identity?: string, disableUserAgent?: boolean);
+    constructor(school: string, username: string, password: string, baseurl?: string, identity?: string, disableUserAgent?: boolean);
     _otpLogin(token: number | string, username: string, time: number, skipSessionInfo?: boolean): Promise<SessionInformation>;
     /**
      *
@@ -641,15 +673,13 @@ declare class InternalWebuntisSecretLogin extends Base {
 type Authenticator = typeof authenticator;
 declare class WebUntisSecretAuth extends InternalWebuntisSecretLogin {
     private readonly secret;
-    private authenticator;
+    private authenticator?;
     /**
-     *
-     * @constructor
      * @augments WebUntis
      * @param {string} school The school identifier
      * @param {string} user
      * @param {string} secret
-     * @param {string} baseurl Just the host name of your WebUntis (Example: mese.webuntis.com)
+     * @param {string} baseurl Just the host name of your WebUntis (Example: [school].webuntis.com)
      * @param {string} [identity="Awesome"] A identity like: MyAwesomeApp
      * @param {Object} authenticator Custom otplib v12 instance. Default will use the default otplib configuration.
      * @param {boolean} [disableUserAgent=false] If this is true, axios will not send a custom User-Agent
@@ -665,7 +695,6 @@ type URLClass = typeof URL;
 declare class WebUntisQR extends WebUntisSecretAuth {
     /**
      * Use the data you get from a WebUntis QR code
-     * @constructor
      * @param {string} QRCodeURI A WebUntis uri. This is the data you get from the QR Code from the webuntis webapp under profile->Data access->Display
      * @param {string} [identity="Awesome"]  A identity like: MyAwesomeApp
      * @param {Object} authenticator Custom otplib v12 instance. Default will use the default otplib configuration.
@@ -677,14 +706,23 @@ declare class WebUntisQR extends WebUntisSecretAuth {
 
 declare class WebUntisAnonymousAuth extends InternalWebuntisSecretLogin {
     /**
+     * Default OTP used by some WebUntis servers for anonymous access.
+     * Kept as a constant for backward compatibility but can be overridden
+     * via the constructor `otp` parameter if a different value is required.
+     */
+    static readonly DEFAULT_OTP = 100170;
+    private anonymousOtp;
+    /**
      *
      * @param {string} school
      * @param {string} baseurl
      * @param {string} [identity='Awesome']
      * @param {boolean} [disableUserAgent=false] If this is true, axios will not send a custom User-Agent
+     * @param {number} [otp] Optional OTP to use for anonymous login. If omitted, `DEFAULT_OTP` is used.
      */
-    constructor(school: string, baseurl: string, identity?: string, disableUserAgent?: boolean);
+    constructor(school: string, baseurl: string, identity?: string, disableUserAgent?: boolean, otp?: number);
     login(): Promise<SessionInformation>;
 }
 
-export { type Absence, type Absences, type Authenticator, Base, type CodesEntity, type ColorEntity, type Department, type Exam, type Excuse, type Holiday, type Homework, type Inbox, type Inboxmessage, InternalWebuntisSecretLogin, type Klasse, type Lesson, type LsEntity, type MessagesOfDay, type Messagesender, type NewsWidget, type Room, type SchoolYear, type ShortData, type StatusData, type Student, type Subject, type Teacher, type TimeUnit, type Timegrid, type URLClass, type WebAPITimetable, type WebElement, type WebElementData, Base as WebUntis, WebUntisAnonymousAuth, WebUntisDay, WebUntisElementType, WebUntisQR, WebUntisSecretAuth };
+export { Base, InternalWebuntisSecretLogin, Base as WebUntis, WebUntisAnonymousAuth, WebUntisDay, WebUntisElementType, WebUntisQR, WebUntisSecretAuth };
+export type { Absence, Absences, Authenticator, CodesEntity, ColorEntity, Department, Exam, Excuse, Holiday, Homework, Inbox, Inboxmessage, Klasse, Lesson, LsEntity, MessagesOfDay, Messagesender, NewsWidget, Room, SchoolYear, SessionInformation, ShortData, StatusData, Student, Subject, Teacher, TimeUnit, Timegrid, URLClass, WebAPITimetable, WebElement, WebElementData };
