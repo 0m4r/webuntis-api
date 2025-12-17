@@ -389,7 +389,6 @@ export class Base {
      */
     private getSessionInfo(): SessionInformation {
         if (!this.sessionInformation) throw new Error('Session not initialized');
-        if (!this.sessionInformation) throw new Error('Session not initialized after login');
         return this.sessionInformation;
     }
 
