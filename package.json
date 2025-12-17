@@ -33,11 +33,16 @@
         "rollup": "^4.53.4",
         "rollup-plugin-dts": "^6.3.0",
         "rollup-plugin-esbuild": "^6.2.1",
+        "ts-node": "^10.9.2",
+        "ts-to-zod": "^5.1.0",
         "typedoc": "^0.28.15",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "zod": "^4.2.1"
     },
     "scripts": {
-        "prepublish": "rollup -c && typedoc",
+        "build": "rollup -c",
+        "prebuild": "ts-to-zod src/types.ts src/types.schema.ts",
+        "prepublish": "yarn run build && typedoc",
         "generate-doc": "typedoc",
         "test": "jest",
         "format": "prettier -w src/"

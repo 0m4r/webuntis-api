@@ -1,4 +1,5 @@
 import { InternalWebuntisSecretLogin } from './base';
+import type { SessionInformation } from './internal';
 
 export class WebUntisAnonymousAuth extends InternalWebuntisSecretLogin {
     /**
@@ -26,7 +27,7 @@ export class WebUntisAnonymousAuth extends InternalWebuntisSecretLogin {
         this.anonymousOtp = typeof otp === 'number' ? otp : WebUntisAnonymousAuth.DEFAULT_OTP;
     }
 
-    override async login() {
+    override async login(): Promise<SessionInformation> {
         // Check whether the school has public access or not
         const url = `/WebUntis/jsonrpc_intern.do`;
 

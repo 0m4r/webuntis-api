@@ -12,9 +12,140 @@
  * This is the simplest way to get started with the WebUntis API.
  */
 
+const homeworksExample: Homeworks = {
+    "records": [
+        {
+            "homeworkId": 25948,
+            "teacherId": 132,
+            "elementIds": [
+                2715
+            ]
+        }
+    ],
+    "homeworks": [
+        {
+            "id": 25948,
+            "lessonId": 29849,
+            "date": 20251215,
+            "dueDate": 20251218,
+            "text": "voc p. 223-224 copy and learn",
+            "remark": "",
+            "completed": false,
+            "attachments": []
+        }
+    ],
+    "teachers": [
+        {
+            "id": 132,
+            "name": "SKE"
+        }
+    ],
+    "lessons": [
+        {
+            "id": 29888,
+            "subject": "F",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29921,
+            "subject": "BI",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30275,
+            "subject": "KR",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29987,
+            "subject": "PH",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 32649,
+            "subject": "",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29738,
+            "subject": "D",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 31180,
+            "subject": "AGTh",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 32652,
+            "subject": "",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30095,
+            "subject": "Pk-Wi",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29999,
+            "subject": "EK",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30418,
+            "subject": "Delf",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30707,
+            "subject": "8ErgKrea",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 32664,
+            "subject": "",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30233,
+            "subject": "MU",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29849,
+            "subject": "E",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 29786,
+            "subject": "M",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30170,
+            "subject": "SP",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30652,
+            "subject": "LES",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30622,
+            "subject": "FÖ-D",
+            "lessonType": "Unterricht"
+        },
+        {
+            "id": 30366,
+            "subject": "SIL",
+            "lessonType": "Unterricht"
+        }
+    ]
+}
 
 // Import the WebUntis client from the parent directory
-import { WebUntis, Subject, Klasse } from '../src/index';
+import { WebUntis, Subject, Klasse, Homework, Homeworks } from '../src/index';
 import { basicAuthConfig, validateBasicAuthConfig } from './config';
 
 /**

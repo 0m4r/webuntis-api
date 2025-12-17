@@ -8,7 +8,7 @@ import type {
     Department,
     Exam,
     Holiday,
-    Homework,
+    Homeworks,
     Inbox,
     Klasse,
     Lesson,
@@ -45,7 +45,7 @@ const parse = <DateType extends Date>(
 
 export class Base {
     school: string;
-    schoolbase64: string;
+    schoolBase64: string;
     username: string;
     password: string;
     baseurl?: string;
@@ -188,11 +188,11 @@ export class Base {
         username: string,
         password: string,
         baseurl?: string,
-        identity = 'Awesome',
-        disableUserAgent = false,
+        identity: string = 'Awesome',
+        disableUserAgent: boolean = false,
     ) {
         this.school = school;
-        this.schoolbase64 = '_' + btoa(this.school);
+        this.schoolBase64 = btoa(school);
         this.username = username;
         this.password = password;
         this.baseurl = 'https://' + (baseurl ? baseurl : `${school}.webuntis.com`) + '/';
@@ -267,7 +267,20 @@ export class Base {
         if (!response.result) throw new Error('Failed to login. ' + JSON.stringify(response));
         if (response.result.code) throw new Error('Login returned error code: ' + response.result.code);
         if (!response.result.sessionId) throw new Error('Failed to login. No session id.');
+
         this.sessionInformation = response.result;
+
+        const klasse = await this._getKlasseId();
+        if (klasse && this.sessionInformation) {
+            this.sessionInformation.klasseId = klasse;
+        }
+        const loggedInUser = await this._getAppConfig();
+        if (loggedInUser) {
+            this.sessionInformation = {
+                ...this.sessionInformation,
+                ...loggedInUser,
+            };
+        }
         return response.result;
     }
 
@@ -275,7 +288,7 @@ export class Base {
      * Get the latest WebUntis Schoolyear
      * @param {Boolean} [validateSession=true]
      */
-    async getLatestSchoolyear(validateSession = true): Promise<SchoolYear> {
+    async getLatestSchoolyear(validateSession: boolean = true): Promise<SchoolYear> {
         const data = await this._request<InternalSchoolYear[]>('getSchoolyears', {}, validateSession);
         data.sort((a, b) => {
             const na = parse(a.startDate, 'yyyyMMdd', new Date());
@@ -295,7 +308,7 @@ export class Base {
      * Get all WebUntis Schoolyears
      * @param {Boolean} [validateSession=true]
      */
-    async getSchoolyears(validateSession = true): Promise<SchoolYear[]> {
+    async getSchoolyears(validateSession: boolean = true): Promise<SchoolYear[]> {
         const data = await this._request<InternalSchoolYear[]>('getSchoolyears', {}, validateSession);
         data.sort((a, b) => {
             const na = parse(a.startDate, 'yyyyMMdd', new Date());
@@ -319,7 +332,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise<Object>} see index.d.ts NewsWidget
      */
-    async getNewsWidget(date: Date, validateSession = true): Promise<NewsWidget> {
+    async getNewsWidget(date: Date, validateSession: boolean = true): Promise<NewsWidget> {
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
 
         const response = await this._fetch('/WebUntis/api/public/news/newsWidgetData', {
@@ -376,6 +389,7 @@ export class Base {
      */
     private getSessionInfo(): SessionInformation {
         if (!this.sessionInformation) throw new Error('Session not initialized');
+        if (!this.sessionInformation) throw new Error('Session not initialized after login');
         return this.sessionInformation;
     }
 
@@ -396,12 +410,51 @@ export class Base {
      * @returns {string}
      * @private
      */
-    _buildCookies() {
+    _buildCookies(): string {
         let cookies = [];
         const s = this.getSessionInfo();
         cookies.push(serialize('JSESSIONID', s.sessionId!));
-        cookies.push(serialize('schoolname', this.schoolbase64));
+        cookies.push('schoolname=_' + this.schoolBase64);
+        // console.log('_buildCookies', cookies)
         return cookies.join('; ');
+    }
+
+    async _getAppConfig() {
+        const response = await this._fetch('/WebUntis/api/app/config', {
+            method: 'GET',
+            headers: {
+                Cookie: this._buildCookies(),
+            },
+        });
+        // console.log("_getAppConfig | response", JSON.stringify(response?.data?.loginServiceConfig?.user, null, 2));
+        return response?.data?.loginServiceConfig?.user || undefined;
+    }
+
+    async _getKlasseId() {
+        const response = await this._fetch('/WebUntis/api/daytimetable/config', {
+            method: 'GET',
+            headers: {
+                Cookie: this._buildCookies(),
+                'User-Agent': this.baseHeaders['User-Agent'] || '',
+            },
+        });
+
+        // console.log("_getKlasseId | response", JSON.stringify(response, null, 2));
+
+        return response?.data?.klasseId || undefined;
+    }
+
+    _getPersonIdAndType(): { personId: number; personType: number } {
+        let { personId, personType, persons } = this.getSessionInfo();
+        if (personType === 12 && persons && persons.length < 0) {
+            throw new Error('getOwnTimetableForToday is not supported for personType 12 (Guardian)');
+        } else {
+            personId = persons?.[0].id;
+            personType = persons?.[0].type;
+        }
+        if (!personId || !personType) return null as any;
+
+        return { personId, personType };
     }
 
     /**
@@ -459,7 +512,7 @@ export class Base {
      * Get the time when WebUntis last changed its data
      * @param {Boolean} [validateSession=true]
      */
-    async getLatestImportTime(validateSession = true): Promise<number> {
+    async getLatestImportTime(validateSession: boolean = true): Promise<number> {
         return this._request('getLatestImportTime', {}, validateSession);
     }
 
@@ -519,10 +572,10 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise<Array>}
      */
-    async getOwnTimetableForToday(validateSession = true): Promise<Lesson[]> {
+    async getOwnTimetableForToday(validateSession: boolean = true): Promise<Lesson[]> {
         this._checkAnonymous();
-        const s = this.getSessionInfo();
-        return await this._timetableRequest(s.personId!, s.personType!, null, null, validateSession);
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId!, personType!, null, null, validateSession);
     }
 
     /**
@@ -532,8 +585,9 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise<Array>}
      */
-    async getTimetableForToday(id: number, type: number, validateSession = true): Promise<Lesson[]> {
-        return await this._timetableRequest(id, type, null, null, validateSession);
+    async getTimetableForToday(id: number, type: number, validateSession: boolean = true): Promise<Lesson[]> {
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId, personType, null, null, validateSession);
     }
 
     /**
@@ -542,10 +596,10 @@ export class Base {
      * @param {Date} date
      * @param {Boolean} [validateSession=true]
      */
-    async getOwnTimetableFor(date: Date, validateSession = true): Promise<Lesson[]> {
+    async getOwnTimetableFor(date: Date, validateSession: boolean = true): Promise<Lesson[]> {
         this._checkAnonymous();
-        const s = this.getSessionInfo();
-        return await this._timetableRequest(s.personId!, s.personType!, date, date, validateSession);
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId!, personType!, date, date, validateSession);
     }
 
     /**
@@ -555,8 +609,9 @@ export class Base {
      * @param {WebUntisElementType} type
      * @param {Boolean} [validateSession=true]
      */
-    async getTimetableFor(date: Date, id: number, type: number, validateSession = true): Promise<Lesson[]> {
-        return await this._timetableRequest(id, type, date, date, validateSession);
+    async getTimetableFor(date: Date, id: number, type: number, validateSession: boolean = true): Promise<Lesson[]> {
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId, personType, date, date, validateSession);
     }
 
     /**
@@ -567,11 +622,15 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getOwnTimetableForRange(rangeStart: Date, rangeEnd: Date, validateSession = true): Promise<Lesson[]> {
+    async getOwnTimetableForRange(
+        rangeStart: Date,
+        rangeEnd: Date,
+        validateSession: boolean = true,
+    ): Promise<Lesson[]> {
         this._checkAnonymous();
         Base.validateDateRange(rangeStart, rangeEnd, 'getOwnTimetableForRange');
-        const s = this.getSessionInfo();
-        return await this._timetableRequest(s.personId!, s.personType!, rangeStart, rangeEnd, validateSession);
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId!, personType!, rangeStart, rangeEnd, validateSession);
     }
 
     /**
@@ -587,10 +646,11 @@ export class Base {
         rangeEnd: Date,
         id: number,
         type: number,
-        validateSession = true,
+        validateSession: boolean = true,
     ): Promise<Lesson[]> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getTimetableForRange');
-        return await this._timetableRequest(id, type, rangeStart, rangeEnd, validateSession);
+        const { personId, personType } = this._getPersonIdAndType();
+        return await this._timetableRequest(personId, personType, rangeStart, rangeEnd, validateSession);
     }
 
     /**
@@ -599,7 +659,7 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise<Array>}
      */
-    async getOwnClassTimetableForToday(validateSession = true): Promise<Lesson[]> {
+    async getOwnClassTimetableForToday(validateSession: boolean = true): Promise<Lesson[]> {
         this._checkAnonymous();
         const s = this.getSessionInfo();
         return await this._timetableRequest(s.klasseId!, 1, null, null, validateSession);
@@ -612,7 +672,7 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getOwnClassTimetableFor(date: Date, validateSession = true): Promise<Lesson[]> {
+    async getOwnClassTimetableFor(date: Date, validateSession: boolean = true): Promise<Lesson[]> {
         this._checkAnonymous();
         const s = this.getSessionInfo();
         return await this._timetableRequest(s.klasseId!, 1, date, date, validateSession);
@@ -625,7 +685,11 @@ export class Base {
      * @param {Date} rangeEnd
      * @param {boolean} [validateSession=true]
      */
-    async getOwnClassTimetableForRange(rangeStart: Date, rangeEnd: Date, validateSession = true): Promise<Lesson[]> {
+    async getOwnClassTimetableForRange(
+        rangeStart: Date,
+        rangeEnd: Date,
+        validateSession: boolean = true,
+    ): Promise<Lesson[]> {
         this._checkAnonymous();
         Base.validateDateRange(rangeStart, rangeEnd, 'getOwnClassTimetableForRange');
         const s = this.getSessionInfo();
@@ -639,7 +703,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getHomeWorksFor(rangeStart: Date, rangeEnd: Date, validateSession = true): Promise<Homework[]> {
+    async getHomeWorksFor(rangeStart: Date, rangeEnd: Date, validateSession: boolean = true): Promise<Homeworks> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getHomeWorksFor');
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
 
@@ -667,7 +731,7 @@ export class Base {
      * @param {string} date Untis date string
      * @param {Date} [baseDate=new Date()] Base date. Default beginning of current day
      */
-    static convertUntisDate(date: string, baseDate = startOfDay(new Date())): Date {
+    static convertUntisDate(date: string, baseDate: Date = startOfDay(new Date())): Date {
         if (typeof date !== 'string') date = `${date}`;
         return parse(date, 'yyyyMMdd', baseDate);
     }
@@ -677,7 +741,7 @@ export class Base {
      * @param {string|number} time Untis time string
      * @param {Date} [baseDate=new Date()] Day used as base for the time. Default: Current date
      */
-    static convertUntisTime(time: number | string, baseDate = new Date()): Date {
+    static convertUntisTime(time: number | string, baseDate: Date = new Date()): Date {
         if (typeof time !== 'string') time = `${time}`;
         return parse(time.padStart(4, '0'), 'Hmm', baseDate);
     }
@@ -698,7 +762,7 @@ export class Base {
      * Get all known Subjects for the current logged-in user
      * @param {boolean} [validateSession=true]
      */
-    async getSubjects(validateSession = true): Promise<Subject[]> {
+    async getSubjects(validateSession: boolean = true): Promise<Subject[]> {
         return await this._request('getSubjects', {}, validateSession);
     }
 
@@ -707,7 +771,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getTimegrid(validateSession = true): Promise<Timegrid[]> {
+    async getTimegrid(validateSession: boolean = true): Promise<Timegrid[]> {
         return await this._request('getTimegridUnits', {}, validateSession);
     }
 
@@ -719,7 +783,11 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<void>}
      */
-    async getHomeWorkAndLessons(rangeStart: Date, rangeEnd: Date, validateSession = true): Promise<Array<any>> {
+    async getHomeWorkAndLessons(
+        rangeStart: Date,
+        rangeEnd: Date,
+        validateSession: boolean = true,
+    ): Promise<Array<any>> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getHomeWorkAndLessons');
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
 
@@ -753,9 +821,9 @@ export class Base {
     async getExamsForRange(
         rangeStart: Date,
         rangeEnd: Date,
-        klasseId = -1,
-        withGrades = false,
-        validateSession = true,
+        klasseId: string | number | undefined = undefined,
+        withGrades: boolean = false,
+        validateSession: boolean = true,
     ): Promise<Array<Exam>> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getExamsForRange');
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
@@ -766,8 +834,8 @@ export class Base {
             searchParams: {
                 startDate: Base.convertDateToUntis(rangeStart),
                 endDate: Base.convertDateToUntis(rangeEnd),
-                klasseId: klasseId,
-                withGrades: withGrades,
+                klasseId: this.sessionInformation?.klasseId,
+                withGrades,
             },
             headers: {
                 Cookie: this._buildCookies(),
@@ -793,17 +861,17 @@ export class Base {
         date: Date,
         id: number,
         type: number,
-        formatId = 1,
-        validateSession = true,
-    ): Promise<WebAPITimetable[]> {
+        formatId: number = 1,
+        validateSession: boolean = true,
+    ): Promise<WebAPITimetable> {
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
-
+        const { personId, personType } = this._getPersonIdAndType();
         const response = await this._fetch('/WebUntis/api/public/timetable/weekly/data', {
             method: 'GET',
 
             searchParams: {
-                elementType: type,
-                elementId: id,
+                elementType: personType,
+                elementId: personId,
                 date: format(date, 'yyyy-MM-dd'),
                 formatId: formatId,
             },
@@ -826,7 +894,7 @@ export class Base {
             throw err;
         }
 
-        if (!response.data.result?.data?.elementPeriods?.[id]) throw new Error('Invalid response');
+        if (!response.data?.result?.data?.elementPeriods?.[personId]) throw new Error('Invalid response');
 
         const data = response.data.result.data;
 
@@ -844,7 +912,7 @@ export class Base {
             }));
         };
 
-        const timetable = data.elementPeriods[id].map((lesson: any) => ({
+        const timetable = data.elementPeriods[personId].map((lesson: any) => ({
             ...lesson,
             classes: formatElements(lesson.elements, { byType: Base.TYPES.CLASS }),
             teachers: formatElements(lesson.elements, { byType: Base.TYPES.TEACHER }),
@@ -863,7 +931,11 @@ export class Base {
      * @param {Boolean} [validateSession=true]
      * @returns {Promise<WebAPITimetable[]>}
      */
-    async getOwnTimetableForWeek(date: Date, formatId = 1, validateSession = true): Promise<WebAPITimetable[]> {
+    async getOwnTimetableForWeek(
+        date: Date,
+        formatId: number = 1,
+        validateSession: boolean = true,
+    ): Promise<WebAPITimetable> {
         this._checkAnonymous();
         const s = this.getSessionInfo();
         return await this.getTimetableForWeek(date, s.personId!, s.personType!, formatId, validateSession);
@@ -874,7 +946,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getTeachers(validateSession = true): Promise<Teacher[]> {
+    async getTeachers(validateSession: boolean = true): Promise<Teacher[]> {
         return await this._request('getTeachers', {}, validateSession);
     }
 
@@ -883,7 +955,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getStudents(validateSession = true): Promise<Student[]> {
+    async getStudents(validateSession: boolean = true): Promise<Student[]> {
         return await this._request('getStudents', {}, validateSession);
     }
 
@@ -892,7 +964,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getRooms(validateSession = true): Promise<Room[]> {
+    async getRooms(validateSession: boolean = true): Promise<Room[]> {
         return await this._request('getRooms', {}, validateSession);
     }
 
@@ -902,7 +974,7 @@ export class Base {
      * @param {number} schoolyearId
      * @returns {Promise.<Array>}
      */
-    async getClasses(validateSession = true, schoolyearId: number): Promise<Klasse[]> {
+    async getClasses(validateSession: boolean = true, schoolyearId: number): Promise<Klasse[]> {
         const data = typeof schoolyearId !== 'number' ? {} : { schoolyearId };
         return await this._request('getKlassen', data, validateSession);
     }
@@ -912,7 +984,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getDepartments(validateSession = true): Promise<Department[]> {
+    async getDepartments(validateSession: boolean = true): Promise<Department[]> {
         return await this._request('getDepartments', {}, validateSession);
     }
 
@@ -921,7 +993,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getHolidays(validateSession = true): Promise<Holiday[]> {
+    async getHolidays(validateSession: boolean = true): Promise<Holiday[]> {
         return await this._request('getHolidays', {}, validateSession);
     }
 
@@ -930,7 +1002,7 @@ export class Base {
      * @param {boolean} [validateSession=true]
      * @returns {Promise.<Array>}
      */
-    async getStatusData(validateSession = true): Promise<StatusData> {
+    async getStatusData(validateSession: boolean = true): Promise<StatusData> {
         return await this._request('getStatusData', {}, validateSession);
     }
 
@@ -977,8 +1049,8 @@ export class Base {
     async _request<Response = Record<string, any>>(
         method: string,
         parameter: Record<string, any> = {},
-        validateSession = true,
-        url = `/WebUntis/jsonrpc.do`,
+        validateSession: boolean = true,
+        url: string = `/WebUntis/jsonrpc.do`,
     ): Promise<Response> {
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
 
@@ -1009,34 +1081,33 @@ export class Base {
      * Returns all the Lessons where you were absent including the excused one!
      * @param {Date} rangeStart
      * @param {Date} rangeEnd
-     * @param {Integer} [excuseStatusId=-1]
+     * @param {number} [excuseStatusId=-1]
      * @param {boolean} [validateSession=true]
      * @returns {Promise<Absences>}
      */
     async getAbsentLesson(
         rangeStart: Date,
         rangeEnd: Date,
-        excuseStatusId = -1,
-        validateSession = true,
+        excuseStatusId: number = -1,
+        validateSession: boolean = true,
     ): Promise<Absences> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getAbsentLesson');
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
         this._checkAnonymous();
-
+        const { personId } = this._getPersonIdAndType();
         const response = await this._fetch('/WebUntis/api/classreg/absences/students', {
             method: 'GET',
 
             searchParams: {
                 startDate: Base.convertDateToUntis(rangeStart),
                 endDate: Base.convertDateToUntis(rangeEnd),
-                studentId: this.getCurrentPerson().personId,
+                studentId: personId,
                 excuseStatusId: excuseStatusId,
             },
             headers: {
                 Cookie: this._buildCookies(),
             },
         });
-
         if (response.data == null) throw new Error('Server returned no data!');
         return response.data;
     }
@@ -1046,7 +1117,7 @@ export class Base {
      * @param {Date} rangeStart
      * @param {Date} rangeEnd
      * @param {boolean} [validateSession=true]
-     * @param {Integer} [excuseStatusId=-1]
+     * @param {number} [excuseStatusId=-1]
      * @param {boolean} [lateness=true]
      * @param {boolean} [absences=true]
      * @param {boolean} [excuseGroup=2]
@@ -1054,15 +1125,18 @@ export class Base {
     async getPdfOfAbsentLesson(
         rangeStart: Date,
         rangeEnd: Date,
-        validateSession = true,
-        excuseStatusId = -1,
-        lateness = true,
-        absences = true,
-        excuseGroup = 2,
+        validateSession: boolean = true,
+        excuseStatusId: number,
+        lateness: boolean = true,
+        absences: boolean = true,
+        excuseGroup: number,
     ): Promise<string> {
         Base.validateDateRange(rangeStart, rangeEnd, 'getPdfOfAbsentLesson');
         if (validateSession && !(await this.validateSession())) throw new Error('Current Session is not valid');
         this._checkAnonymous();
+        const { personId } = this._getPersonIdAndType();
+
+        console.log('personId', personId);
 
         const response = await this._fetch('/WebUntis/reports.do', {
             method: 'GET',
@@ -1073,7 +1147,7 @@ export class Base {
                 rpt_sd: Base.convertDateToUntis(rangeStart),
                 rpt_ed: Base.convertDateToUntis(rangeEnd),
                 excuseStatusId: excuseStatusId,
-                studentId: this.getCurrentPerson().personId,
+                studentId: personId,
                 withLateness: lateness,
                 withAbsences: absences,
                 execuseGroup: excuseGroup,
@@ -1087,6 +1161,7 @@ export class Base {
         if (res.error) throw new Error('Server returned no data!');
         const pdfDownloadURL =
             this.baseurl + 'WebUntis/reports.do?' + 'msgId=' + res.messageId + '&' + res.reportParams;
+        console.log(pdfDownloadURL);
         return pdfDownloadURL;
     }
 }
@@ -1106,7 +1181,12 @@ export class InternalWebuntisSecretLogin extends Base {
         super(school, username, password, baseurl, identity, disableUserAgent);
     }
 
-    async _otpLogin(token: number | string, username: string, time: number, skipSessionInfo = false) {
+    async _otpLogin(
+        token: number | string,
+        username: string,
+        time: number,
+        skipSessionInfo = false,
+    ): Promise<SessionInformation> {
         const response = await this._fetchRaw('/WebUntis/jsonrpc_intern.do', {
             method: 'POST',
 
@@ -1141,10 +1221,11 @@ export class InternalWebuntisSecretLogin extends Base {
         if (!sessionId) throw new Error("Failed to login. Server didn't return a session id.");
 
         // Set session temporary
-        this.sessionInformation = {
+        const baseSession: SessionInformation = {
             sessionId: sessionId,
         };
-        if (skipSessionInfo) return this.sessionInformation;
+        this.sessionInformation = baseSession;
+        if (skipSessionInfo) return baseSession;
 
         // Get personId & personType
         const appConfigUrl = `/WebUntis/api/app/config`;
@@ -1178,8 +1259,8 @@ export class InternalWebuntisSecretLogin extends Base {
         this.sessionInformation = {
             sessionId: sessionId,
             personType: person.type,
-
             personId: configResponse.data.loginServiceConfig.user.personId,
+            // ...configResponse.data.loginServiceConfig.user,
         };
         // Get klasseId
         try {
@@ -1216,11 +1297,11 @@ export class InternalWebuntisSecretLogin extends Base {
      *
      * @param {Array} setCookieArray
      * @param {string} [cookieName="JSESSIONID"]
-     * @return {string|boolean}
+     * @return {string|undefined}
      * @private
      */
-    _getCookieFromSetCookie(setCookieArray?: string[], cookieName = 'JSESSIONID') {
-        if (!setCookieArray) return;
+    _getCookieFromSetCookie(setCookieArray?: string[], cookieName: string = 'JSESSIONID'): string | undefined {
+        if (!setCookieArray) return undefined;
         for (let i = 0; i < setCookieArray.length; i++) {
             const setCookie = setCookieArray[i];
             if (!setCookie) continue;
@@ -1234,5 +1315,6 @@ export class InternalWebuntisSecretLogin extends Base {
                 if (Key === cookieName) return Value;
             }
         }
+        return undefined;
     }
 }

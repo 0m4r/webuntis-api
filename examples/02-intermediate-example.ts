@@ -12,7 +12,7 @@
  * This example builds upon the basic example and shows real-world usage patterns.
  */
 
-import { WebUntis, WebUntisSecretAuth, Lesson, Homework, Exam, WebUntisElementType } from '../src/index';
+import { WebUntis, WebUntisSecretAuth, Lesson, Homework, Exam, WebUntisElementType, Homeworks } from '../src/index';
 import { basicAuthConfig, secretAuthConfig, validateBasicAuthConfig, validateSecretAuthConfig } from './config';
 import { authenticator } from 'otplib';
 
@@ -153,12 +153,12 @@ async function demonstrateBasicAuth(): Promise<void> {
         homeworkEnd.setDate(today.getDate() + 7);
 
         try {
-            const homework: Homework[] = await untis.getHomeWorksFor(today, homeworkEnd);
-            console.log(`📋 Found ${homework.length} homework assignments`);
+            const { homeworks }: Homeworks = await untis.getHomeWorksFor(today, homeworkEnd);
+            console.log(`📋 Found ${homeworks.length} homework assignments`);
 
-            if (homework.length > 0) {
+            if (homeworks.length > 0) {
                 console.log('\n📝 Upcoming Homework:');
-                homework.slice(0, 5).forEach((hw, index) => {
+                homeworks?.slice(0, 5).forEach((hw, index) => {
                     const dueDate = WebUntis.convertUntisDate(hw.dueDate.toString());
                     console.log(`   ${index + 1}. Due ${formatDate(dueDate)}: ${hw.text}`);
                     if (hw.remark) {
@@ -167,8 +167,8 @@ async function demonstrateBasicAuth(): Promise<void> {
                     console.log(`      Status: ${hw.completed ? 'Completed' : 'Pending'}`);
                 });
 
-                if (homework.length > 5) {
-                    console.log(`   ... and ${homework.length - 5} more assignments`);
+                if (homeworks.length > 5) {
+                    console.log(`   ... and ${homeworks.length - 5} more assignments`);
                 }
             }
         } catch (error) {

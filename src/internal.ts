@@ -7,4 +7,17 @@ export type SessionInformation = {
     sessionId?: string;
     personType?: number;
     jwt_token?: string;
+    name?: string;
+    id?: number;
+    departmentId?: number;
+    roleId?: number;
+    userGroupId?: number;
+    persons?: Array<{
+        id: number;
+        type: number;
+        displayName: string;
+        longName: string;
+        foreName: string;
+    }>;
+    email?: string;
 };

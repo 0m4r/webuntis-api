@@ -9,7 +9,7 @@ const inlineDeps = new Set([]);
 
 const bundle = (config) => ({
     ...config,
-    input: 'src/index.ts',
+    input: config.input ?? 'src/index.ts',
     treeshake: true,
     external: (id) => {
         if (inlineDeps.has(id)) return false;
@@ -40,5 +40,29 @@ export default defineConfig([
             file: `./dist/${name}.d.ts`,
             format: 'es',
         },
+    }),
+    bundle({
+        input: {
+            'examples/01-basic-example': 'examples/01-basic-example.ts',
+            'examples/02-intermediate-example': 'examples/02-intermediate-example.ts',
+            'examples/03-comprehensive-example': 'examples/03-comprehensive-example.ts',
+            'examples/config': 'examples/config.ts',
+            'examples/runtime-type-check': 'examples/runtime-type-check.ts',
+        },
+        plugins: [esbuild()],
+        output: [
+            {
+                dir: './dist',
+                entryFileNames: '[name].mjs',
+                format: 'es',
+                sourcemap: true,
+            },
+            {
+                dir: './dist',
+                entryFileNames: '[name].js',
+                format: 'cjs',
+                sourcemap: true,
+            },
+        ],
     }),
 ]);
