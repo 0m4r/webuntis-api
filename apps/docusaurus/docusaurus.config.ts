@@ -1,13 +1,13 @@
-import { themes as prismThemes } from 'prism-react-renderer';
-import type { Config } from '@docusaurus/types';
-import type * as Preset from '@docusaurus/preset-classic';
+import { themes as prismThemes } from "prism-react-renderer";
+import type { Config } from "@docusaurus/types";
+import type * as Preset from "@docusaurus/preset-classic";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'WebUntis API Docs',
-  tagline: 'Type-safe client for WebUntis',
-  favicon: 'img/favicon.ico',
+  title: "WebUntis API Docs",
+  tagline: "Type-safe client for WebUntis",
+  favicon: "img/favicon.ico",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -15,42 +15,41 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://0m4r.github.io',
+  url: "https://0m4r.github.io",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/webuntis-api/',
+  baseUrl: "/webuntis-api/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: '0m4r', // Usually your GitHub org/user name.
-  projectName: 'webuntis-api', // Usually your repo name.
-  deploymentBranch: 'gh-pages',
-  staticDirectories: ['static', 'docs/api/_media'],
+  organizationName: "0m4r", // Usually your GitHub org/user name.
+  projectName: "webuntis-api", // Usually your repo name.
+  deploymentBranch: "gh-pages",
+  staticDirectories: ["static", "docs/api/_media"],
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: "throw",
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: "en",
+    locales: ["en"],
   },
 
   presets: [
     [
-      'classic',
+      "classic",
       {
         docs: {
-          path: './docs',
-          routeBasePath: '/',
-          sidebarPath: './sidebars.ts',
-          editUrl:
-            'https://github.com/0m4r/webuntis-api/tree/main/apps/docusaurus/',
+          path: "./docs",
+          routeBasePath: "/",
+          sidebarPath: "./sidebars.ts",
+          editUrl: "https://github.com/0m4r/webuntis-api/tree/main/apps/docusaurus/",
         },
         blog: false,
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: "./src/css/custom.css",
         },
       } satisfies Preset.Options,
     ],
@@ -58,63 +57,63 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/webuntis-api-logo.svg',
+    image: "img/webuntis-api-logo.svg",
     colorMode: {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'WebUntis',
+      title: "WebUntis",
       logo: {
-        alt: 'WebUntis logo',
-        src: 'img/webuntis-api-logo.svg',
+        alt: "WebUntis logo",
+        src: "img/webuntis-api-logo.svg",
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'api',
-          position: 'left',
-          label: 'API',
+          type: "docSidebar",
+          sidebarId: "api",
+          position: "left",
+          label: "API",
         },
         {
-          type: 'docSidebar',
-          sidebarId: 'examples',
-          position: 'left',
-          label: 'Examples',
+          type: "docSidebar",
+          sidebarId: "examples",
+          position: "left",
+          label: "Examples",
         },
         {
-          href: 'https://github.com/0m4r/webuntis-api',
-          label: 'GitHub',
-          position: 'right',
+          href: "https://github.com/0m4r/webuntis-api",
+          label: "GitHub",
+          position: "right",
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: "dark",
       links: [
         {
-          title: 'Docs',
+          title: "Docs",
           items: [
             {
-              label: 'API',
-              to: '/api',
+              label: "API",
+              to: "/api",
             },
           ],
         },
         {
-          title: 'Examples',
+          title: "Examples",
           items: [
             {
-              label: 'Examples',
-              to: '/examples',
+              label: "Examples",
+              to: "/examples",
             },
           ],
         },
         {
-          title: 'More',
+          title: "More",
           items: [
             {
-              label: 'GitHub',
-              href: 'https://github.com/0m4r/webuntis-api',
+              label: "GitHub",
+              href: "https://github.com/0m4r/webuntis-api",
             },
           ],
         },

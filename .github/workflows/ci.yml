@@ -1,7 +1,7 @@
 name: CI
 permissions:
   contents: write
-  pages: write   # optional; contents:write is the key for gh-pages
+  pages: write # optional; contents:write is the key for gh-pages
 
 on:
   workflow_call:
