@@ -115,17 +115,20 @@ function detectPackageManager(rootPkg, { repoRoot }) {
   /** Decide npm vs yarn using packageManager or lockfile fallback. */
   const declared = rootPkg.packageManager;
   if (typeof declared === "string") {
-    if (declared.startsWith("yarn")) return "yarn";
-    if (declared.startsWith("npm")) return "npm";
+    const [name, version] = declared.split("@");
+    return { name, major: version ? Number(version.split(".")[0]) || null : null };
   }
-  if (fs.existsSync(path.join(repoRoot, "yarn.lock"))) return "yarn";
-  return "npm";
+  if (fs.existsSync(path.join(repoRoot, "yarn.lock"))) return { name: "yarn", major: 1 };
+  return { name: "npm", major: null };
 }
 
 function getVersionCommand({ packageManager, version, packageDir }) {
-  if (packageManager === "yarn") {
-    // Yarn Berry doesn't support --new-version; use npm plugin to mirror npm semantics.
-    return `cd ${packageDir} && yarn npm version ${version} --no-git-tag-version`;
+  if (packageManager.name === "yarn") {
+    // Yarn Classic supports --new-version; Berry uses `yarn version <semver> --immediate`.
+    if ((packageManager.major || 1) >= 2) {
+      return `cd ${packageDir} && yarn version ${version} --immediate`;
+    }
+    return `cd ${packageDir} && yarn version --new-version ${version} --no-git-tag-version`;
   }
   return `cd ${packageDir} && npm version ${version} --no-git-tag-version`;
 }
