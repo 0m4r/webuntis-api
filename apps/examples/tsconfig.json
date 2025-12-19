@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../..",
+    "baseUrl": "../..",
+    "paths": {
+      "webuntis-api": ["./packages/webuntis-api/src/index.ts"],
+      "webuntis-api/types.schema": ["./packages/webuntis-api/src/types.schema.ts"]
+    },
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules"]
+}

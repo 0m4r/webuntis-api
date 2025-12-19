@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/index.ts"],
+  "out": "../../apps/docs",
+  // "cname": "webuntis.noim.me",
+  "githubPages": true,
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "hideGenerator": true,
+  "theme": "default",
+  "name": "WebUntis API Client",
+  "readme": "../../Readme.md",
+  "cleanOutputDir": true
+}

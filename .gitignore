@@ -68,5 +68,8 @@ test2.js
 .env*
 dist/
 dist-examples/
+.nx/
+packages/webuntis-api/dist/
+apps/examples/dist/
 SECRET.md
 *.txt

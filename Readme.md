@@ -1,23 +1,42 @@
-# WebUntis API
+# WebUntis API (monorepo)
 
-This is a NodeJS Wrapper for the JSON RPC WebUntis API.
+This Nx monorepo hosts the `webuntis-api` library, examples, and docs. It is a Node.js wrapper for the WebUntis JSON RPC API.
 
-The Documentation is available at [https://webuntis.noim.me/](https://webuntis.noim.me/)
+- [Online docs](./apps/docs/index.html)
+- Upstream inspiration: built on top of the work in [SchoolUtils/WebUntis](https://github.com/SchoolUtils/WebUntis).
 
-In case you need the Untis API Spec (pdf), you need to email Untis directly and ask. I am (legally) not allowed to publish it.
+In case you need the official Untis API spec (PDF), you must request it directly from Untis. It cannot be redistributed here.
 
-## Note:
+## Monorepo layout
 
-As I have not been a student for a long time, I currently have no access to any Untis services. If you want to share your login details with me for testing purposes, contact me via [Telegram](https://t.me/TheNoim) or other means ([Homepage](https://noim.io)).
+- `packages/webuntis-api` — core library source, Rollup build, Jest tests.
+  - Build: `yarn nx run webuntis-api:build`
+  - Test: `yarn nx run webuntis-api:test`
+- `apps/examples` — TypeScript usage demos; bundle with `yarn nx run examples:build`.
+- `apps/docs` — generated API reference (Typedoc) output.
+
+Shared tooling lives at the workspace root. If Nx shows stale project graph errors, run `NX_DAEMON=false nx reset`.
+
+## Install (library consumers)
+
+```bash
+yarn add webuntis-api
+# or
+npm i webuntis-api
+# or
+pnpm i webuntis-api
+```
+
+The package ships CJS and ESM builds. Primary target is Node.js; browser support is not guaranteed.
 
 ## Examples
 
 ### User/Password Login
 
 ```javascript
-import { WebUntis } from 'webuntis';
+import { WebUntis } from "webuntis-api";
 
-const untis = new WebUntis('school', 'username', 'password', 'school.webuntis.com');
+const untis = new WebUntis("school", "username", "password", "school.webuntis.com");
 
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
@@ -28,14 +47,14 @@ const timetable = await untis.getOwnTimetableForToday();
 ### QR Code Login
 
 ```javascript
-import { WebUntisQR } from 'webuntis';
-import { URL } from 'url';
-import { authenticator as Authenticator } from 'otplib';
+import { WebUntisQR } from "webuntis-api";
+import { URL } from "url";
+import { authenticator as Authenticator } from "otplib";
 
 // The result of the scanned QR Code
-const QRCodeData = 'untis://setschool?url=[...]&school=[...]&user=[...]&key=[...]&schoolNumber=[...]';
+const QRCodeData = "untis://setschool?url=[...]&school=[...]&user=[...]&key=[...]&schoolNumber=[...]";
 
-const untis = new WebUntisQR(QRCodeData, 'custom-identity', Authenticator, URL);
+const untis = new WebUntisQR(QRCodeData, "custom-identity", Authenticator, URL);
 
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
@@ -46,18 +65,18 @@ const timetable = await untis.getOwnTimetableForToday();
 ### User/Secret Login
 
 ```javascript
-import { WebUntisSecretAuth } from 'webuntis';
-import { authenticator as Authenticator } from 'otplib';
+import { WebUntisSecretAuth } from "webuntis-api";
+import { authenticator as Authenticator } from "otplib";
 
-const secret = 'NL04FGY4FSY5';
+const secret = "NL04FGY4FSY5";
 
 const untis = new WebUntisSecretAuth(
-    'school',
-    'username',
-    secret,
-    'school.webuntis.com',
-    'custom-identity',
-    Authenticator,
+  "school",
+  "username",
+  secret,
+  "school.webuntis.com",
+  "custom-identity",
+  Authenticator,
 );
 
 await untis.login();
@@ -71,27 +90,15 @@ const timetable = await untis.getOwnTimetableForToday();
 Only if your school supports public access.
 
 ```javascript
-import { WebUntisAnonymousAuth, WebUntisElementType } from 'webuntis';
+import { WebUntisAnonymousAuth, WebUntisElementType } from "webuntis-api";
 
-const untis = new WebUntisAnonymousAuth('school', 'school.webuntis.com');
+const untis = new WebUntisAnonymousAuth("school", "school.webuntis.com");
 
 await untis.login();
 const classes = await untis.getClasses();
 const timetable = await untis.getTimetableForToday(classes[0].id, WebUntisElementType.CLASS);
 
 // profit
-```
-
-### Installation
-
-This package is compatible with CJS and ESM. _Note:_ This package primary target is nodejs. It may also work with runtimes like react-native, but it will probably not work in the browser.
-
-```bash
-yarn add webuntis
-# Or
-npm i webuntis --save
-# Or
-pnpm i webuntis
 ```
 
 ### ESM note:

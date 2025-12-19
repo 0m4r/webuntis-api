@@ -1,50 +1,46 @@
 {
-    "name": "webuntis",
-    "version": "2.2.1",
-    "description": "WebUntis API",
-    "main": "dist/webuntis.js",
-    "module": "dist/webuntis.mjs",
-    "typings": "dist/webuntis.d.ts",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/SchoolUtils/WebUntis.git"
-    },
-    "author": "Nils Bergmann <nilsbergmann@noim.io>",
-    "license": "MIT",
-    "private": false,
-    "files": [
-        "dist",
-        "docs"
-    ],
-    "dependencies": {
-        "date-fns": "^4.1.0"
-    },
-    "optionalDependencies": {
-        "otplib": "^12"
-    },
-    "devDependencies": {
-        "dotenv": "^17.2.3",
-        "esbuild": "^0.27.1",
-        "jest": "^30.2.0",
-        "jest-fetch-mock": "^3.0.3",
-        "jest-in-case": "^1.0.2",
-        "otplib": "^12",
-        "prettier": "^3.7.4",
-        "rollup": "^4.53.4",
-        "rollup-plugin-dts": "^6.3.0",
-        "rollup-plugin-esbuild": "^6.2.1",
-        "ts-node": "^10.9.2",
-        "ts-to-zod": "^5.1.0",
-        "typedoc": "^0.28.15",
-        "typescript": "^5.9.3",
-        "zod": "^4.2.1"
-    },
-    "scripts": {
-        "build": "rollup -c",
-        "prebuild": "ts-to-zod src/types.ts src/types.schema.ts",
-        "prepublish": "yarn run build && typedoc",
-        "generate-doc": "typedoc",
-        "test": "jest",
-        "format": "prettier -w src/"
-    }
+  "name": "webuntis-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "WebUntis monorepo workspace",
+  "license": "MIT",
+  "packageManager": "yarn@1.22.22",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0m4r/webuntis-api.git"
+  },
+  "devDependencies": {
+    "@nx/js": "19.8.0",
+    "@nx/workspace": "19.8.0",
+    "dotenv": "^17.2.3",
+    "esbuild": "^0.27.1",
+    "jest": "^30.2.0",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-in-case": "^1.0.2",
+    "nx": "19.8.0",
+    "otplib": "^12",
+    "prettier": "^3.7.4",
+    "rollup": "^4.53.4",
+    "rollup-plugin-dts": "^6.3.0",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "ts-to-zod": "^5.1.0",
+    "typedoc": "^0.28.15",
+    "typescript": "^5.9.3",
+    "zod": "^4.2.1"
+  },
+  "scripts": {
+    "nx": "nx",
+    "build": "nx run webuntis-api:build",
+    "test": "nx run webuntis-api:test",
+    "docs": "nx run docs:generate",
+    "examples": "nx run examples:build",
+    "format": "prettier -w .",
+    "format:check": "prettier -c .",
+    "release:webuntis-api": "node scripts/release-webuntis-api.js"
+  }
 }

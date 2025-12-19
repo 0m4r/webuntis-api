@@ -1,0 +1,30 @@
+{
+  "name": "@0m4r/webuntis-api",
+  "version": "3.0.0",
+  "description": "WebUntis API",
+  "main": "dist/webuntis-api.js",
+  "module": "dist/webuntis-api.mjs",
+  "typings": "dist/webuntis-api.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0m4r/webuntis-api.git"
+  },
+  "author": "Omar Adobati <omar.adobati@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "dependencies": {
+    "date-fns": "^4.1.0"
+  },
+  "optionalDependencies": {
+    "otplib": "^12"
+  },
+  "scripts": {
+    "prebuild": "ts-to-zod src/types.ts src/types.schema.ts && prettier -w src/types.schema.ts"
+  }
+}

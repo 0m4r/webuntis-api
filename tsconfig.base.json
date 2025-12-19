@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "webuntis-api": ["packages/webuntis-api/src/index.ts"],
+      "webuntis-api/types.schema": ["packages/webuntis-api/src/types.schema.ts"]
+    }
+  }
+}

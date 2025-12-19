@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "docs",
+  "projectType": "application",
+  "root": "apps/docs",
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["webuntis-api:build"],
+      "options": {
+        "command": "typedoc --options packages/webuntis-api/typedoc.json"
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["webuntis-api"]
+}

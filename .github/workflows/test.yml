@@ -1,14 +1,32 @@
 name: Tests
-on: [push, pull_request]
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**/*.ts"
+      - "**/*.js"
+      - "**/*.mjs"
+      - "apps/**"
+      - "packages/**"
+      - "nx.json"
+      - "tsconfig.base.json"
+      - "package.json"
+      - "yarn.lock"
+  pull_request:
+    paths:
+      - "**/*.ts"
+      - "**/*.js"
+      - "**/*.mjs"
+      - "apps/**"
+      - "packages/**"
+      - "nx.json"
+      - "tsconfig.base.json"
+      - "package.json"
+      - "yarn.lock"
+
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout repo
-              uses: actions/checkout@v2
-
-            - name: Install node_modules
-              run: yarn
-
-            - name: Run tests
-              run: yarn test
+  call-ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit

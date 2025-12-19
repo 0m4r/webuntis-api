@@ -1,34 +1,22 @@
-name: Ensure documentation is up-to-date
-on:
-    push:
-        paths-ignore:
-            - 'docs/**'
-            - 'dist/**'
+name: Docs
 
-concurrency: ci-${{ github.ref }}
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/docs/**"
+      - "packages/**"
+      - "nx.json"
+      - "tsconfig.base.json"
+      - "package.json"
+      - "yarn.lock"
+  workflow_dispatch: {}
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                  fetch-depth: 2
-
-            - run: git pull --rebase
-
-            - name: Install node_modules
-              run: yarn
-
-            - name: Generate docs
-              run: yarn generate-doc
-
-            - name: Commit changes
-              uses: EndBug/add-and-commit@v9
-              if: ${{ github.ref == 'refs/heads/master' }}
-              with:
-                  author_name: high5-bot
-                  author_email: me+high5@dunklestoast.de
-                  message: 'docs: update documentation'
-                  add: '.'
-                  push: true
+  call-ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      run-docs: true
+      docs-publish: true
+    secrets: inherit

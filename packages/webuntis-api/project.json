@@ -1,0 +1,32 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "webuntis-api",
+  "projectType": "library",
+  "root": "packages/webuntis-api",
+  "sourceRoot": "packages/webuntis-api/src",
+  "targets": {
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-to-zod packages/webuntis-api/src/types.ts packages/webuntis-api/src/types.schema.ts && prettier -w packages/webuntis-api/src/types.schema.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "dependsOn": ["prebuild"],
+      "options": {
+        "command": "rollup -c packages/webuntis-api/rollup.config.mjs"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/coverage"],
+      "dependsOn": ["build"],
+      "options": {
+        "command": "jest --config packages/webuntis-api/jest.config.js"
+      }
+    }
+  },
+  "tags": []
+}
