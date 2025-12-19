@@ -124,7 +124,8 @@ function detectPackageManager(rootPkg, { repoRoot }) {
 
 function getVersionCommand({ packageManager, version, packageDir }) {
   if (packageManager === "yarn") {
-    return `cd ${packageDir} && yarn version --new-version ${version} --no-git-tag-version`;
+    // Yarn Berry doesn't support --new-version; use npm plugin to mirror npm semantics.
+    return `cd ${packageDir} && yarn npm version ${version} --no-git-tag-version`;
   }
   return `cd ${packageDir} && npm version ${version} --no-git-tag-version`;
 }
