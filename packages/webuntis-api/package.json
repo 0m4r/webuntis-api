@@ -1,6 +1,6 @@
 {
   "name": "@0m4r/webuntis-api",
-  "version": "3.0.0",
+  "version": "3.0.1-test-development.2",
   "description": "WebUntis API",
   "main": "dist/webuntis-api.js",
   "module": "dist/webuntis-api.mjs",
@@ -40,5 +40,6 @@
   },
   "scripts": {
     "prebuild": "ts-to-zod src/types.ts src/types.schema.ts && prettier -w src/types.schema.ts"
-  }
+  },
+  "stableVersion": "3.0.0"
 }
