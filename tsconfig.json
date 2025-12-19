@@ -3,7 +3,7 @@
   "files": [],
   "references": [
     {
-      "path": "./packages/webuntis/tsconfig.json"
+      "path": "./packages/webuntis-api/tsconfig.json"
     },
     {
       "path": "./apps/examples/tsconfig.json"
