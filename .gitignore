@@ -74,3 +74,4 @@ apps/examples/dist/
 SECRET.md
 *.txt
 apps/docusaurus/docs/api/
+.npmrc
