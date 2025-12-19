@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">intro | WebUntis API Docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://0m4r.github.io/webuntis-api/img/webuntis-api-logo.svg"><meta data-rh="true" name="twitter:image" content="https://0m4r.github.io/webuntis-api/img/webuntis-api-logo.svg"><meta data-rh="true" property="og:url" content="https://0m4r.github.io/webuntis-api/intro"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="intro | WebUntis API Docs"><link data-rh="true" rel="icon" href="/webuntis-api/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://0m4r.github.io/webuntis-api/intro"><link data-rh="true" rel="alternate" href="https://0m4r.github.io/webuntis-api/intro" hreflang="en"><link data-rh="true" rel="alternate" href="https://0m4r.github.io/webuntis-api/intro" hreflang="x-default"><link rel="stylesheet" href="/webuntis-api/assets/css/styles.e3f225c6.css">
-<script src="/webuntis-api/assets/js/runtime~main.3edfa11c.js" defer="defer"></script>
-<script src="/webuntis-api/assets/js/main.22f7357e.js" defer="defer"></script>
+<script src="/webuntis-api/assets/js/runtime~main.98af41d6.js" defer="defer"></script>
+<script src="/webuntis-api/assets/js/main.eff91834.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -21,16 +21,16 @@
 <ul>
 <li class=""><code>packages/webuntis-api</code> — core library source, Rollup build, Jest tests.<!-- -->
 <ul>
-<li class="">Build: <code>yarn nx run webuntis-api:build</code></li>
-<li class="">Test: <code>yarn nx run webuntis-api:test</code></li>
+<li class="">Build: <code>npm run nx -- run webuntis-api:build</code></li>
+<li class="">Test: <code>npm run nx -- run webuntis-api:test</code></li>
 </ul>
 </li>
-<li class=""><code>apps/examples</code> — TypeScript usage demos; bundle with <code>yarn nx run examples:build</code>.</li>
+<li class=""><code>apps/examples</code> — TypeScript usage demos; bundle with <code>npm run nx -- run examples:build</code>.</li>
 <li class=""><code>apps/docusaurus/docs/api</code> — generated API reference (TypeDoc) output for the docs site.</li>
 </ul>
 <p>Shared tooling lives at the workspace root. If Nx shows stale project graph errors, run <code>NX_DAEMON=false nx reset</code>.</p>
 <h2 class="anchor anchorTargetStickyNavbar_SAay" id="install-library-consumers">Install (library consumers)<a href="#install-library-consumers" class="hash-link" aria-label="Direct link to Install (library consumers)" title="Direct link to Install (library consumers)" translate="no">​</a></h2>
-<div class="language-bash codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_kX1v"><pre tabindex="0" class="prism-code language-bash codeBlock_TAPP thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#393A34"><span class="token plain">yarn add webuntis-api</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># or</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">npm i webuntis-api</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># or</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">pnpm i webuntis-api</span><br></span></code></pre></div></div>
+<div class="language-bash codeBlockContainer_ZGJx theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_kX1v"><pre tabindex="0" class="prism-code language-bash codeBlock_TAPP thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_AdAo"><span class="token-line" style="color:#393A34"><span class="token plain">npm install @0m4r/webuntis-api</span><br></span></code></pre></div></div>
 <p>The package ships CJS and ESM builds. Primary target is Node.js; browser support is not guaranteed.</p>
 <h2 class="anchor anchorTargetStickyNavbar_SAay" id="examples">Examples<a href="#examples" class="hash-link" aria-label="Direct link to Examples" title="Direct link to Examples" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetStickyNavbar_SAay" id="userpassword-login">User/Password Login<a href="#userpassword-login" class="hash-link" aria-label="Direct link to User/Password Login" title="Direct link to User/Password Login" translate="no">​</a></h3>
