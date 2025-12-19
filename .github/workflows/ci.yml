@@ -23,7 +23,7 @@ on:
       docs-publish:
         description: "Publish docs to GitHub Pages (main only)"
         required: false
-        default: false
+        default: true
         type: boolean
   push:
     branches:
