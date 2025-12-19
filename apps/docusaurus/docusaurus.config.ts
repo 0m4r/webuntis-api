@@ -58,7 +58,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/webuntis-api-logo.svg',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -66,7 +66,7 @@ const config: Config = {
       title: 'WebUntis',
       logo: {
         alt: 'WebUntis logo',
-        src: 'img/logo.svg',
+        src: 'img/webuntis-api-logo.svg',
       },
       items: [
         {
@@ -74,6 +74,12 @@ const config: Config = {
           sidebarId: 'api',
           position: 'left',
           label: 'API',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'examples',
+          position: 'left',
+          label: 'Examples',
         },
         {
           href: 'https://github.com/0m4r/webuntis-api',
@@ -90,7 +96,16 @@ const config: Config = {
           items: [
             {
               label: 'API',
-              to: '/',
+              to: '/api',
+            },
+          ],
+        },
+        {
+          title: 'Examples',
+          items: [
+            {
+              label: 'Examples',
+              to: '/examples',
             },
           ],
         },

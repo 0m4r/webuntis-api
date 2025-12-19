@@ -322,7 +322,7 @@ DEBUG=webuntis* node dist/01-basic-example.js
 
 ## 📖 API Reference
 
-For complete API documentation, visit [the documentation](./../docs/index.html)
+For complete API documentation, visit [the documentation](https://0m4r.github.io/webuntis-api/)
 
 ### Key Classes
 
@@ -359,7 +359,7 @@ These examples are provided under the same license as the main WebUntis library.
 
 For support:
 
-1. Check [the documentation ](./../docs/index.html)
+1. Check [the documentation ](https://0m4r.github.io/webuntis-api/)
 2. Review these examples for common patterns
 3. Search existing issues on GitHub
 4. Create new issues with detailed information

@@ -5,8 +5,6 @@ This Nx monorepo hosts the `webuntis-api` library, examples, and docs. It is a N
 - [Online docs](/)
 - Upstream inspiration: built on top of the work in [SchoolUtils/WebUntis](https://github.com/SchoolUtils/WebUntis).
 
-In case you need the official Untis API spec (PDF), you must request it directly from Untis. It cannot be redistributed here.
-
 ## Monorepo layout
 
 - `packages/webuntis-api` — core library source, Rollup build, Jest tests.
@@ -41,7 +39,7 @@ const untis = new WebUntis("school", "username", "password", "school.webuntis.co
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
 
-// profit
+console.log(timetable);
 ```
 
 ### QR Code Login
@@ -59,7 +57,7 @@ const untis = new WebUntisQR(QRCodeData, "custom-identity", Authenticator, URL);
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
 
-// profit
+console.log(timetable);
 ```
 
 ### User/Secret Login
@@ -82,7 +80,7 @@ const untis = new WebUntisSecretAuth(
 await untis.login();
 const timetable = await untis.getOwnTimetableForToday();
 
-// profit
+console.log(timetable);
 ```
 
 ### Anonymous Login
@@ -98,13 +96,13 @@ await untis.login();
 const classes = await untis.getClasses();
 const timetable = await untis.getTimetableForToday(classes[0].id, WebUntisElementType.CLASS);
 
-// profit
+console.log(timetable);
 ```
 
-### ESM note:
+---
 
-If you use the esm version of this package, you need to provide `Authenticator` and `URL` if necessary. For more information, look at the `User/Secret Login` or `QR Code Login` example. This is not needed for `username/password` or `anonymous` login.
+## Notice
 
-### Notice
+There is no affiliation with Untis GmbH. This material is provided without any endorsement or warranty, and its use is entirely at the user’s own risk.
 
-I am not affiliated with Untis GmbH. Use this at your own risk.
+---
