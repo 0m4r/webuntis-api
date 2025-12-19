@@ -1,0 +1,10 @@
+{
+  "name": "@0m4r/examples",
+  "private": true,
+  "devDependencies": {
+    "esbuild": "^0.27.1",
+    "rollup": "^4.53.4",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "typescript": "^5.9.3"
+  }
+}

@@ -18,11 +18,11 @@ Shared tooling lives at the workspace root. If Nx shows stale project graph erro
 ## Install (library consumers)
 
 ```bash
-yarn add webuntis-api
+yarn add @0m4r/webuntis-api
 # or
-npm i webuntis-api
+npm i @0m4r/webuntis-api
 # or
-pnpm i webuntis-api
+pnpm i @0m4r/webuntis-api
 ```
 
 The package ships CJS and ESM builds. Primary target is Node.js; browser support is not guaranteed.

@@ -18,10 +18,25 @@
     "package.json"
   ],
   "dependencies": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "zod": "^4.2.1"
   },
   "optionalDependencies": {
     "otplib": "^12"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "esbuild": "^0.27.1",
+    "jest": "^30.2.0",
+    "jest-fetch-mock": "^3.0.3",
+    "jest-in-case": "^1.0.2",
+    "prettier": "^3.7.4",
+    "rollup": "^4.53.4",
+    "rollup-plugin-dts": "^6.3.0",
+    "rollup-plugin-esbuild": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "ts-to-zod": "^5.1.0",
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "prebuild": "ts-to-zod src/types.ts src/types.schema.ts && prettier -w src/types.schema.ts"

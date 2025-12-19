@@ -12,6 +12,6 @@
   "plugin": ["typedoc-plugin-markdown", "typedoc-docusaurus-theme"],
   "theme": "markdown",
   "name": "WebUntis API Client",
-  "readme": "../../Readme.md",
+  "readme": "../../README.md",
   "cleanOutputDir": true
 }

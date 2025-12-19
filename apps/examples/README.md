@@ -21,11 +21,11 @@ This Nx app hosts comprehensive examples demonstrating how to use the WebUntis A
 1. **Node.js** (version 14 or higher)
 2. **TypeScript** (for development)
 3. **WebUntis Account** with API access
-4. **Required Dependencies**:
+4. **Required Dependencies** (install in your app):
    ```bash
-   npm install otplib
+   npm install @0m4r/webuntis-api otplib
    # or
-   yarn add otplib
+   yarn add @0m4r/webuntis-api otplib
    ```
 
 ### Setup Instructions
