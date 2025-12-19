@@ -1,10 +1,10 @@
 {
-  "name": "webuntis-monorepo",
+  "name": "@0m4r/webuntis-monorepo",
   "version": "0.0.0",
   "private": true,
   "description": "WebUntis monorepo workspace",
   "license": "MIT",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "yarn@4.12.0",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -14,8 +14,11 @@
     "url": "https://github.com/0m4r/webuntis-api.git"
   },
   "devDependencies": {
+    "@algolia/client-search": "^4",
     "@nx/js": "19.8.0",
     "@nx/workspace": "19.8.0",
+    "@types/node": "^22",
+    "@types/react": "^19",
     "dotenv": "^17.2.3",
     "esbuild": "^0.27.1",
     "jest": "^30.2.0",
@@ -24,9 +27,12 @@
     "nx": "19.8.0",
     "otplib": "^12",
     "prettier": "^3.7.4",
+    "react": "^19",
+    "react-loadable": "^5",
     "rollup": "^4.53.4",
     "rollup-plugin-dts": "^6.3.0",
     "rollup-plugin-esbuild": "^6.2.1",
+    "search-insights": "^2",
     "ts-node": "^10.9.2",
     "ts-to-zod": "^5.1.0",
     "typedoc": "^0.28.15",

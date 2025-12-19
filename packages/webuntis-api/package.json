@@ -11,7 +11,6 @@
   },
   "author": "Omar Adobati <omar.adobati@gmail.com>",
   "license": "MIT",
-  "private": false,
   "files": [
     "dist",
     "README.md",
