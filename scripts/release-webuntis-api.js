@@ -55,6 +55,10 @@ const packageManager = detectPackageManager(rootPackageJson, { repoRoot });
   const refreshedPackageJson = execute ? JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) : pkgJson;
   ensureVersionMatchesPackage(resolvedVersion, refreshedPackageJson, { skip: !execute });
 
+  const filesToCommit = collectVersionArtifacts({ packageDir, packageJsonPath });
+  const commitMessage = `release: ${pkgName}@${resolvedVersion}`;
+  stageAndCommit(filesToCommit, commitMessage, { execute });
+
   const gitTag = `${pkgName}@${resolvedVersion}`;
   const commands = [
     `git tag ${gitTag}`,
@@ -68,9 +72,9 @@ Preparing release:
 - version: ${resolvedVersion}${version ? "" : " (suggested)"}
 - channel: ${channel}
 - registry: ${registry}
-- git tag: ${gitTag}
-- mode: ${execute ? "execute" : "dry-run"}
-- push git tag: ${pushTag ? "yes" : "no"}
+ - git tag: ${gitTag}
+ - mode: ${execute ? "execute" : "dry-run"}
+ - push git tag: ${pushTag ? "yes" : "no"}
 `);
 
   if (execute && !autoYes) {
@@ -109,6 +113,32 @@ function ensureVersionMatchesPackage(requestedVersion, pkg, { skip } = {}) {
         "Make sure package.json is updated before publishing.",
     );
   }
+}
+
+function collectVersionArtifacts({ packageDir, packageJsonPath }) {
+  const files = [packageJsonPath];
+  const lockfiles = ["yarn.lock", "package-lock.json", "pnpm-lock.yaml"];
+  for (const lock of lockfiles) {
+    const candidate = path.join(packageDir, lock);
+    if (fs.existsSync(candidate)) files.push(candidate);
+  }
+  return files;
+}
+
+function stageAndCommit(files, message, { execute }) {
+  if (!execute) {
+    console.log(`[dry-run] git add ${files.map((f) => path.relative(repoRoot, f)).join(" ")}`);
+    console.log(`[dry-run] git commit -m "${message}"`);
+    return;
+  }
+  const relative = files.map((f) => path.relative(repoRoot, f));
+  run(`git add ${relative.join(" ")}`, { execute });
+  const diff = execSync("git diff --cached --name-only", { cwd: repoRoot }).toString().trim();
+  if (!diff) {
+    log("No changes to commit after version bump; skipping commit.");
+    return;
+  }
+  run(`git commit -m "${message}"`, { execute });
 }
 
 function detectPackageManager(rootPkg, { repoRoot }) {
