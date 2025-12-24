@@ -387,6 +387,48 @@ cases(
   ],
 );
 
+test("should throw for guardian personType when requesting own timetable", async () => {
+  const untis = createInstance();
+  applySession(untis, {
+    personId: 7,
+    personType: 12,
+    persons: [
+      {
+        id: 7,
+        type: 12,
+        displayName: "Guardian Person",
+        longName: "Guardian Person",
+        foreName: "Guardian",
+      },
+    ],
+  });
+
+  await expect(untis.getOwnTimetableForToday(false)).rejects.toThrow(
+    "getOwnTimetableForToday is not supported for personType 12 (Guardian)",
+  );
+});
+
+test("should still throw for guardian personType even if persons array has a valid non-guardian entry", async () => {
+  const untis = createInstance();
+  applySession(untis, {
+    personId: 99,
+    personType: 12,
+    persons: [
+      {
+        id: 2,
+        type: 5,
+        displayName: "Student Person",
+        longName: "Student Person",
+        foreName: "Student",
+      },
+    ],
+  });
+
+  await expect(untis.getOwnTimetableForToday(false)).rejects.toThrow(
+    "getOwnTimetableForToday is not supported for personType 12 (Guardian)",
+  );
+});
+
 test("should getNewsWidget catch invalid data", async () => {
   const untis = createInstance();
   const response = { testing: "dataTest" };

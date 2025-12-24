@@ -444,16 +444,25 @@ export class Base {
   }
 
   _getPersonIdAndType(): { personId: number; personType: number } {
-    let { personId, personType, persons } = this.getSessionInfo();
-    if (personType === 12 && persons && persons.length < 0) {
+    const { personId, personType, persons } = this.getSessionInfo();
+    // Guardians (12) are not supported by the timetable endpoints we call.
+    if (personType === 12) {
       throw new Error("getOwnTimetableForToday is not supported for personType 12 (Guardian)");
-    } else {
-      personId = persons?.[0].id;
-      personType = persons?.[0].type;
     }
-    if (!personId || !personType) return null as any;
 
-    return { personId, personType };
+    if (Number.isInteger(personId) && Number.isInteger(personType)) {
+      return { personId: personId!, personType: personType! };
+    }
+
+    if (!Array.isArray(persons) || persons.length === 0) {
+      throw new Error("Session does not contain person identifiers");
+    }
+    const fallback = persons[0];
+    if (!Number.isInteger(fallback.id) || !Number.isInteger(fallback.type)) {
+      throw new Error("Session does not contain person identifiers");
+    }
+
+    return { personId: fallback.id, personType: fallback.type };
   }
 
   /**
