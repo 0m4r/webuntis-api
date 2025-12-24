@@ -7,7 +7,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "WebUntis API Docs",
   tagline: "Type-safe client for WebUntis",
-  favicon: "img/favicon.ico",
+  favicon: "img/webuntis-api-logo.svg",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
