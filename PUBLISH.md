@@ -28,6 +28,7 @@ This project publishes `packages/webuntis-api` to the GitHub npm registry with r
 - `yarn release:publish` runs `nx release publish` (uses registry/tag from `nx.json` targetDefaults).
 
 Channels/dist-tags:
+
 - Default tag is `latest` (configured in `nx.json` targetDefaults for `nx-release-publish`).
 - Override with `nx release publish --tag beta` (or other tag).
 
