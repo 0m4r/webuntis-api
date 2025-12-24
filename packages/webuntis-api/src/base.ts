@@ -594,8 +594,7 @@ export class Base {
    * @returns {Promise<Array>}
    */
   async getTimetableForToday(id: number, type: number, validateSession: boolean = true): Promise<Lesson[]> {
-    const { personId, personType } = this._getPersonIdAndType();
-    return await this._timetableRequest(personId, personType, null, null, validateSession);
+    return await this._timetableRequest(id, type, null, null, validateSession);
   }
 
   /**
@@ -618,8 +617,7 @@ export class Base {
    * @param {Boolean} [validateSession=true]
    */
   async getTimetableFor(date: Date, id: number, type: number, validateSession: boolean = true): Promise<Lesson[]> {
-    const { personId, personType } = this._getPersonIdAndType();
-    return await this._timetableRequest(personId, personType, date, date, validateSession);
+    return await this._timetableRequest(id, type, date, date, validateSession);
   }
 
   /**
@@ -653,8 +651,7 @@ export class Base {
     validateSession: boolean = true,
   ): Promise<Lesson[]> {
     Base.validateDateRange(rangeStart, rangeEnd, "getTimetableForRange");
-    const { personId, personType } = this._getPersonIdAndType();
-    return await this._timetableRequest(personId, personType, rangeStart, rangeEnd, validateSession);
+    return await this._timetableRequest(id, type, rangeStart, rangeEnd, validateSession);
   }
 
   /**
@@ -865,13 +862,12 @@ export class Base {
     validateSession: boolean = true,
   ): Promise<WebAPITimetable> {
     if (validateSession && !(await this.validateSession())) throw new Error("Current Session is not valid");
-    const { personId, personType } = this._getPersonIdAndType();
     const response = await this._fetch("/WebUntis/api/public/timetable/weekly/data", {
       method: "GET",
 
       searchParams: {
-        elementType: personType,
-        elementId: personId,
+        elementType: type,
+        elementId: id,
         date: format(date, "yyyy-MM-dd"),
         formatId: formatId,
       },
@@ -894,7 +890,7 @@ export class Base {
       throw err;
     }
 
-    if (!response.data?.result?.data?.elementPeriods?.[personId]) throw new Error("Invalid response");
+    if (!response.data?.result?.data?.elementPeriods?.[id]) throw new Error("Invalid response");
 
     const data = response.data.result.data;
 
@@ -911,7 +907,7 @@ export class Base {
       }));
     };
 
-    const timetable = data.elementPeriods[personId].map((lesson: any) => ({
+    const timetable = data.elementPeriods[id].map((lesson: any) => ({
       ...lesson,
       classes: formatElements(lesson.elements, { byType: Base.TYPES.CLASS }),
       teachers: formatElements(lesson.elements, { byType: Base.TYPES.TEACHER }),
