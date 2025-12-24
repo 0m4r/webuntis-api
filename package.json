@@ -31,6 +31,9 @@
     "examples": "nx run examples:build",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
-    "release:webuntis-api": "node scripts/release-webuntis-api.js"
+    "release": "nx release version",
+    "release:dry": "nx release version --dry-run",
+    "release:publish": "nx release publish",
+    "release:publish:dry": "nx release publish --dry-run"
   }
 }

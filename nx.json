@@ -25,6 +25,35 @@
     "generate": {
       "dependsOn": ["^build"],
       "outputs": ["{projectRoot}"]
+    },
+    "nx-release-publish": {
+      "options": {
+        "registry": "https://npm.pkg.github.com",
+        "tag": "latest"
+      }
+    }
+  },
+  "release": {
+    "projects": ["packages/*"],
+    "projectsRelationship": "fixed",
+    "releaseTagPattern": "v{version}",
+    "version": {
+      "git": {
+        "stageChanges": true,
+        "commit": true,
+        "commitMessage": "chore(release): v{version}",
+        "tag": true
+      }
+    },
+    "changelog": {
+      "workspaceChangelog": false,
+      "projectChangelogs": false,
+      "entryWhenNoChanges": "No code changes in this release.",
+      "git": {
+        "stageChanges": false,
+        "commit": false,
+        "tag": false
+      }
     }
   }
 }
