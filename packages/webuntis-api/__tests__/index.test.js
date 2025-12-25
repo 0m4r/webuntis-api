@@ -387,6 +387,48 @@ cases(
   ],
 );
 
+test("should throw for guardian personType when requesting own timetable", async () => {
+  const untis = createInstance();
+  applySession(untis, {
+    personId: 7,
+    personType: 12,
+    persons: [
+      {
+        id: 7,
+        type: 12,
+        displayName: "Guardian Person",
+        longName: "Guardian Person",
+        foreName: "Guardian",
+      },
+    ],
+  });
+
+  await expect(untis.getOwnTimetableForToday(false)).rejects.toThrow(
+    "getOwnTimetableForToday is not supported for personType 12 (Guardian)",
+  );
+});
+
+test("should still throw for guardian personType even if persons array has a valid non-guardian entry", async () => {
+  const untis = createInstance();
+  applySession(untis, {
+    personId: 99,
+    personType: 12,
+    persons: [
+      {
+        id: 2,
+        type: 5,
+        displayName: "Student Person",
+        longName: "Student Person",
+        foreName: "Student",
+      },
+    ],
+  });
+
+  await expect(untis.getOwnTimetableForToday(false)).rejects.toThrow(
+    "getOwnTimetableForToday is not supported for personType 12 (Guardian)",
+  );
+});
+
 test("should getNewsWidget catch invalid data", async () => {
   const untis = createInstance();
   const response = { testing: "dataTest" };
@@ -493,15 +535,15 @@ cases(
     );
 
     applySession(untis, {
-      personId: id,
-      personType: type,
+      personId: 999,
+      personType: 3,
       persons: [
         {
-          id,
-          type,
-          displayName: "Override Person",
-          longName: "Override Person",
-          foreName: "Override",
+          id: 999,
+          type: 3,
+          displayName: "Session Person",
+          longName: "Session Person",
+          foreName: "Session",
         },
       ],
     });
@@ -573,15 +615,15 @@ cases(
     );
 
     applySession(untis, {
-      personId: id,
-      personType: type,
+      personId: 999,
+      personType: 5,
       persons: [
         {
-          id,
-          type,
-          displayName: "Override Person",
-          longName: "Override Person",
-          foreName: "Override",
+          id: 999,
+          type: 5,
+          displayName: "Session Person",
+          longName: "Session Person",
+          foreName: "Session",
         },
       ],
     });
@@ -657,15 +699,15 @@ cases(
     );
 
     applySession(untis, {
-      personId: id,
-      personType: type,
+      personId: 999,
+      personType: 5,
       persons: [
         {
-          id,
-          type,
-          displayName: "Override Person",
-          longName: "Override Person",
-          foreName: "Override",
+          id: 999,
+          type: 5,
+          displayName: "Session Person",
+          longName: "Session Person",
+          foreName: "Session",
         },
       ],
     });
@@ -1064,6 +1106,46 @@ cases(
     },
   ],
 );
+
+test("should getTimetableForWeek use provided element id/type", async () => {
+  const untis = createInstance();
+  const elementId = 55;
+  const elementType = 7;
+  applySession(untis); // sessionId for cookies
+
+  fetchMock.get(
+    /public\/timetable\/weekly\/data/,
+    {
+      data: {
+        result: {
+          data: {
+            elementPeriods: {
+              [elementId]: [
+                {
+                  id: 1,
+                  elements: [],
+                },
+              ],
+            },
+            elements: [],
+          },
+        },
+      },
+    },
+    { overwriteRoutes: true },
+  );
+
+  const result = await untis.getTimetableForWeek(new Date("11/13/2019"), elementId, elementType, 2, false);
+
+  const call = fetchMock.calls().find(([url]) => `${url}`.includes("timetable/weekly/data"));
+  expect(call).toBeDefined();
+  const url = new URL(call[0]);
+  expect(url.searchParams.get("elementId")).toBe(`${elementId}`);
+  expect(url.searchParams.get("elementType")).toBe(`${elementType}`);
+  expect(url.searchParams.get("formatId")).toBe("2");
+  expect(Array.isArray(result)).toBe(true);
+  expect(result[0].classes).toEqual([]);
+});
 
 cases(
   "should convertDateToUntis converted date",

@@ -53,6 +53,14 @@ typings/
 
 # Yarn Integrity file
 .yarn-integrity
+# Yarn Berry artifacts
+.yarn/*
+.yarn/install-state.gz
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
 # dotenv environment variables file
 .env
@@ -74,3 +82,4 @@ apps/examples/dist/
 SECRET.md
 *.txt
 apps/docusaurus/docs/api/
+.npmrc

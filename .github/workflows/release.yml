@@ -1,0 +1,54 @@
+name: Publish (Nx Release)
+
+on:
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: "Registry URL"
+        required: false
+        default: "https://npm.pkg.github.com"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine dist-tag
+        id: disttag
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          tag="canary"
+          if [ "$branch" = "main" ]; then
+            tag="latest"
+          elif [ "$branch" = "develop" ]; then
+            tag="beta"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Using dist-tag: $tag"
+        shell: bash
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: ${{ inputs.registry || 'https://npm.pkg.github.com' }}
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Publish with Nx
+        env:
+          NX_DAEMON: "false"
+        run: |
+          yarn release:publish --tag "${{ steps.disttag.outputs.tag }}" --registry "${{ inputs.registry }}"

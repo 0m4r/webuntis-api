@@ -1,13 +1,13 @@
 {
   "name": "@0m4r/apps-docusaurus",
-  "version": "0.0.0",
+  "version": "3.0.1-test-development.6",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "prestart": "yarn typedoc",
+    "prestart": "yarn typedoc && yarn prepare:versions",
     "build": "docusaurus build",
-    "prebuild": "yarn typedoc",
+    "prebuild": "yarn typedoc && yarn prepare:versions",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -15,7 +15,8 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "typedoc": "typedoc --options ../../packages/webuntis-api/typedoc.json"
+    "typedoc": "typedoc --options ../../packages/webuntis-api/typedoc.json",
+    "prepare:versions": "node ./scripts/prepare-docs-version.js"
   },
   "dependencies": {
     "@algolia/client-search": "^4",

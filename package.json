@@ -14,23 +14,30 @@
     "url": "https://github.com/0m4r/webuntis-api.git"
   },
   "devDependencies": {
-    "@nx/js": "19.8.0",
-    "@nx/workspace": "19.8.0",
+    "@nx/js": "^22.3.3",
+    "@nx/workspace": "^22.3.3",
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.15.7",
     "@types/node": "^22",
     "dotenv": "^17.2.3",
-    "nx": "19.8.0",
+    "nx": "^22.3.3",
     "prettier": "^3.7.4"
   },
   "scripts": {
     "nx": "nx",
-    "build": "nx run webuntis-api:build",
+    "build": "nx run-many -t prebuild,build,postbuild --projects=packages/webuntis-api",
     "test": "nx run webuntis-api:test",
-    "docs": "nx run-many -t typedoc,build --projects=apps/docusaurus",
+    "docs": "nx run-many -t typedoc, prepare:versions,build --projects=apps/docusaurus",
     "docs:dev": "nx run docusaurus:start",
     "docs:deploy": "nx run docusaurus:deploy",
     "examples": "nx run examples:build",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
-    "release:webuntis-api": "node scripts/release-webuntis-api.js"
+    "release": "nx release version",
+    "release:dry": "nx release version --dry-run",
+    "release:publish": "nx release publish",
+    "release:publish:dry": "nx release publish --dry-run",
+    "changelog": "nx release changelog",
+    "changelog:dry": "nx release changelog --dry-run"
   }
 }
