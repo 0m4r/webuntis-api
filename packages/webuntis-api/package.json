@@ -39,7 +39,13 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "prebuild": "ts-to-zod src/types.ts src/types.schema.ts && prettier -w src/types.schema.ts"
+    "build:schema": "ts-to-zod src/types.ts src/types.schema.ts",
+    "format:schema": "prettier -w src/types.schema.ts",
+    "copy:schema": "cp src/types.schema.ts ./dist/",
+    "prebuild": "yarn run build:schema && yarn run format:schema ",
+    "postbuild": "yarn run copy:schema",
+    "build": "rollup -c rollup.config.mjs",
+    "test": "jest --config jest.config.js"
   },
   "stableVersion": "3.0.0"
 }

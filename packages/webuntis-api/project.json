@@ -8,7 +8,7 @@
     "prebuild": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-to-zod packages/webuntis-api/src/types.ts packages/webuntis-api/src/types.schema.ts && prettier -w packages/webuntis-api/src/types.schema.ts"
+        "command": "yarn --cwd packages/webuntis-api prebuild"
       }
     },
     "build": {
@@ -16,7 +16,15 @@
       "outputs": ["{projectRoot}/dist"],
       "dependsOn": ["prebuild"],
       "options": {
-        "command": "rollup -c packages/webuntis-api/rollup.config.mjs"
+        "command": "yarn --cwd packages/webuntis-api build"
+      }
+    },
+    "postbuild": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "dependsOn": ["build"],
+      "options": {
+        "command": "yarn --cwd packages/webuntis-api postbuild"
       }
     },
     "test": {
@@ -24,7 +32,7 @@
       "outputs": ["{projectRoot}/coverage"],
       "dependsOn": ["build"],
       "options": {
-        "command": "jest --config packages/webuntis-api/jest.config.js"
+        "command": "yarn --cwd packages/webuntis-api test"
       }
     }
   },

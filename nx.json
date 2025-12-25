@@ -6,6 +6,9 @@
     "appsDir": "apps",
     "libsDir": "packages"
   },
+  "tui": {
+    "autoExit": true
+  },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
@@ -34,9 +37,13 @@
     }
   },
   "release": {
-    "projects": ["packages/*"],
+    "projects": ["packages/*", "apps/*"],
     "projectsRelationship": "fixed",
-    "releaseTagPattern": "v{version}",
+    "releaseTag": {
+      "pattern": "v{version}",
+      "requireSemver": true,
+      "checkAllBranchesWhen": ["main", "release/*"]
+    },
     "version": {
       "git": {
         "stageChanges": true,
@@ -46,12 +53,12 @@
       }
     },
     "changelog": {
-      "workspaceChangelog": false,
+      "workspaceChangelog": true,
       "projectChangelogs": false,
-      "entryWhenNoChanges": "No code changes in this release.",
       "git": {
-        "stageChanges": false,
-        "commit": false,
+        "stageChanges": true,
+        "commit": true,
+        "commitMessage": "chore(changelog): v{version}",
         "tag": false
       }
     }
