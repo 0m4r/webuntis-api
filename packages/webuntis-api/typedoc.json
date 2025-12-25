@@ -1,8 +1,11 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": ["./src/index.ts"],
+  "entryPointStrategy": "resolve",
+  "sortEntryPoints": true,
+  "sort": ["documents-first"],
   "tsconfig": "./tsconfig.json",
-  "out": "../../apps/docusaurus/docs/api",
+  // "out": "../../apps/docusaurus/docs/api",
   "githubPages": true,
   "includeVersion": true,
   "excludePrivate": true,
@@ -12,6 +15,14 @@
   "plugin": ["typedoc-plugin-markdown", "typedoc-docusaurus-theme"],
   "theme": "markdown",
   "name": "WebUntis API Client",
-  "readme": "../../packages/webuntis-api/README.md",
-  "cleanOutputDir": true
+  "readme": "./README.md",
+  "mergeReadme": true,
+  "cleanOutputDir": true,
+  "enumMembersFormat": "table",
+  "parametersFormat": "table",
+  "typeDeclarationFormat": "table",
+  "indexFormat": "table",
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "gitRevision": "main"
 }

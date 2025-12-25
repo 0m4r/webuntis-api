@@ -32,12 +32,20 @@ function ensureTagsAvailable() {
   const isCI = process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true";
   if (!isCI) return;
 
+  const shallowFile = path.join(repoRoot, ".git", "shallow");
   const tagCount = Number(tryGit(`git tag --list | wc -l`)) || 0;
   if (tagCount > 0) return;
 
   console.log("[prepare:versions] No tags found; fetching tags from origin...");
   try {
-    execSync(`git fetch --force --tags --prune --update-shallow origin`, {
+    // If the repo is shallow, unshallow first so tag fetch succeeds.
+    if (fs.existsSync(shallowFile)) {
+      execSync(`git fetch --unshallow --update-shallow`, {
+        cwd: repoRoot,
+        stdio: "inherit",
+      });
+    }
+    execSync(`git fetch --force --tags --prune --update-shallow origin +refs/tags/*:refs/tags/*`, {
       cwd: repoRoot,
       stdio: "inherit",
     });
