@@ -27,7 +27,7 @@
     "nx": "nx",
     "build": "nx run-many -t prebuild,build,postbuild --projects=packages/webuntis-api",
     "test": "nx run webuntis-api:test",
-    "docs": "nx run-many -t typedoc, prepare:versions,build --projects=apps/docusaurus",
+    "docs": "nx run-many -t typedoc,prepare:versions,build --projects=apps/docusaurus",
     "docs:dev": "nx run docusaurus:start",
     "docs:deploy": "nx run docusaurus:deploy",
     "examples": "nx run examples:build",

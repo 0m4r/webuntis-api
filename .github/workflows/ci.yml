@@ -108,7 +108,7 @@ jobs:
         run: yarn test
 
   docs:
-    if: inputs.run-docs || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: inputs.run-docs || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -136,7 +136,7 @@ jobs:
           path: apps/docusaurus/build
 
       - name: Deploy to GitHub Pages
-        if: inputs.docs-publish && github.ref == 'refs/heads/main'
+        if: inputs.docs-publish
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
