@@ -36,6 +36,8 @@
     "release": "nx release version",
     "release:dry": "nx release version --dry-run",
     "release:publish": "nx release publish",
-    "release:publish:dry": "nx release publish --dry-run"
+    "release:publish:dry": "nx release publish --dry-run",
+    "changelog": "nx release changelog",
+    "changelog:dry": "nx release changelog --dry-run"
   }
 }
