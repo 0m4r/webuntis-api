@@ -1,6 +1,6 @@
 {
   "name": "@0m4r/webuntis-api",
-  "version": "3.0.1-test-development.4",
+  "version": "3.0.1-test-development.5",
   "description": "WebUntis API",
   "main": "dist/webuntis-api.js",
   "module": "dist/webuntis-api.mjs",

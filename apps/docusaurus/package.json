@@ -1,6 +1,6 @@
 {
   "name": "@0m4r/apps-docusaurus",
-  "version": "0.0.0",
+  "version": "3.0.1-test-development.5",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
