@@ -1,8 +1,17 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import fs from "fs";
+import path from "path";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
+const branchName =
+  process.env.BRANCH_NAME || process.env.VERCEL_GIT_COMMIT_REF || process.env.GITHUB_REF_NAME || "local";
+const releaseChannel = branchName === "main" ? "latest" : branchName === "develop" ? "beta" : "canary";
+const versionsPath = path.join(__dirname, "versions.json");
+const versionedDocs = fs.existsSync(versionsPath) ? (require(versionsPath) as string[]) : [];
+const stableVersion = versionedDocs[0];
+const includeVersions = versionedDocs.length ? ["current", ...versionedDocs] : ["current"];
 
 const config: Config = {
   title: "WebUntis API Docs",
@@ -46,6 +55,27 @@ const config: Config = {
           routeBasePath: "/",
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/0m4r/webuntis-api/tree/main/apps/docusaurus/",
+          lastVersion: stableVersion ?? "current",
+          onlyIncludeVersions: includeVersions,
+          versions: {
+            current: {
+              label: releaseChannel,
+              banner: releaseChannel === "latest" ? "none" : "unreleased",
+              badge: true,
+            },
+            ...(versionedDocs.length
+              ? Object.fromEntries(
+                  versionedDocs.map((v, idx) => [
+                    v,
+                    {
+                      label: idx === 0 ? "latest" : v,
+                      banner: "none",
+                      badge: true,
+                    },
+                  ]),
+                )
+              : {}),
+          },
         },
         blog: false,
         theme: {
@@ -85,6 +115,15 @@ const config: Config = {
           label: "GitHub",
           position: "right",
         },
+        {
+          type: "docsVersionDropdown",
+          position: "right",
+        },
+        // {
+        //   type: "html",
+        //   position: "left",
+        //   value: `<span class="navbar__item navbar__link">${releaseChannel.toUpperCase()}</span>`,
+        // },
       ],
     },
     footer: {
@@ -116,6 +155,9 @@ const config: Config = {
               href: "https://github.com/0m4r/webuntis-api",
             },
           ],
+        },
+        {
+          title: `Channel ${releaseChannel.toUpperCase()}`,
         },
       ],
       copyright: `Built with Docusaurus.`,
